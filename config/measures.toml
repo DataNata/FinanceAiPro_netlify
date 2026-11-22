@@ -1,0 +1,154 @@
+# Маппинг мер Методики (Приложение А) на коды статей (колонка code в CSV-файлах).
+#   [pl.*] — ОПУ, data/csv/pl.csv: помесячные обороты (USD).
+#   [bs.*] — баланс, data/csv/bs.csv: остаток на конец месяца (USD).
+# sign: в ОПУ расходы хранятся со знаком «−»; sign = -1 переводит расход в положительную сумму.
+# hint: подсказка к статье в шаблоне CSV (колонка line_name), labels: названия кодов, если их у меры несколько.
+# missing: "zero" — нет строки за месяц, значит 0; "nan" — показатель не определён (например, амортизация не выделена).
+# Решения по маппингу (согласовано 03.11.2026):
+#   ОПУ — итог Level 0 (Statutory + Operational adj.);
+#   ДЗ — только торговая перед третьими лицами, без авансов и ICO;
+#   КЗ — торговая перед третьими лицами + торговая внутригрупповая (ICO), без авансов и ребейтов
+#        (03.11.2026: поставщиков фактически финансирует группа, без ICO DPO ≈ 0 у всех юрлиц);
+#   банковский долг — без факторинга и аренды.
+
+[pl.revenue]
+name = "Выручка"
+ref = "[Revenue]"
+codes = ["1000000000"]
+sign = 1
+missing = "nan"
+
+[pl.cost_of_sales]
+name = "Себестоимость продаж"
+hint = "расход — со знаком «−»"
+ref = "[Cost of sales]"
+codes = ["2000000000"]
+sign = -1
+missing = "nan"
+
+[pl.gross_profit]
+name = "Валовая прибыль"
+hint = "убыток — со знаком «−»"
+ref = "[Gross profit]"
+codes = ["8000000000"]
+sign = 1
+missing = "nan"
+
+[pl.profit_before_tax]
+name = "Прибыль до налогообложения"
+hint = "убыток — со знаком «−»"
+ref = "[Profit before tax]"
+codes = ["9100000000"]
+sign = 1
+missing = "nan"
+
+[pl.net_profit]
+name = "Чистая прибыль"
+hint = "убыток — со знаком «−»"
+ref = "[Net profit]"
+codes = ["7000000000"]
+sign = 1
+missing = "nan"
+
+[pl.income_tax]
+name = "Налог на прибыль"
+hint = "расход — со знаком «−»"
+ref = "[Income tax]"
+codes = ["6000000000"]
+sign = -1
+missing = "zero"
+
+[pl.interest_bank]
+name = "Банковские проценты"
+hint = "расход — со знаком «−»"
+ref = "[Interest expense_forEbitda]"
+codes = ["5001020100"]   # Bank interest; факторинг, аренда, ICO — не включаются
+sign = -1
+missing = "zero"
+
+[pl.amortisation]
+name = "Амортизация"
+hint = "расход — со знаком «−»"
+ref = "[Amortisation_forEbitda]"
+codes = ["4001070000"]   # Depreciation / Amortisation
+sign = -1
+missing = "nan"
+
+[pl.inventory_stat]
+name = "Запасы (статистическая строка ОПУ, для контроля)"
+ref = "inventory"
+codes = ["9400000000"]
+sign = 1
+missing = "nan"
+
+[bs.total_assets]
+name = "Активы"
+ref = "[Total assets]"
+codes = ["1000000000"]
+
+[bs.total_liabilities_equity]
+name = "Пассивы (обязательства и капитал)"
+ref = "LIABILITIES AND EQUITY"
+codes = ["2000000000"]
+
+[bs.non_current_assets]
+name = "Внеоборотные активы"
+ref = "[Non-current assets]"
+codes = ["1100000000"]
+
+[bs.current_assets]
+name = "Оборотные активы"
+ref = "[Current assets]"
+codes = ["1200000000"]
+
+[bs.inventories]
+name = "Запасы"
+ref = "[Inventories]"
+codes = ["1201000000"]
+
+[bs.trade_receivables]
+name = "Дебиторская задолженность (торговая)"
+ref = "[Trade receivables]"
+codes = ["1202010000"]
+
+[bs.cash]
+name = "Денежные средства"
+ref = "[Cash]"
+codes = ["1206000000"]
+
+[bs.non_current_liabilities]
+name = "Долгосрочные обязательства"
+ref = "[Non-current liabilities]"
+codes = ["2100000000"]
+
+[bs.current_liabilities]
+name = "Краткосрочные обязательства"
+ref = "[Current liabilities]"
+codes = ["2200000000"]
+
+[bs.equity]
+name = "Собственный капитал"
+ref = "[Equity]"
+codes = ["2300000000"]
+
+[bs.share_capital]
+name = "Уставный капитал"
+ref = "Share capital"
+codes = ["2301010000"]
+
+[bs.trade_payables]
+name = "Кредиторская задолженность (торговая, включая внутригрупповую)"
+ref = "[Trade payables]"
+codes = ["2201010000", "2207010000"]   # Trade payables + Trade payables - ICO (закупки через группу)
+labels = ["Торговая КЗ перед третьими лицами", "Торговая КЗ внутригрупповая (ICO)"]
+
+[bs.bank_loans_lt]
+name = "Долгосрочные банковские кредиты"
+ref = "[Bank loans LT]"
+codes = ["2101010000"]
+
+[bs.bank_loans_st]
+name = "Краткосрочные банковские кредиты и овердрафты"
+ref = "[Bank loans ST]"
+codes = ["2204010000", "2204020000", "2204030000"]   # овердрафты, текущая часть долгосрочного долга, краткосрочные кредиты
+labels = ["Овердрафты", "Текущая часть долгосрочных кредитов", "Краткосрочные банковские кредиты"]

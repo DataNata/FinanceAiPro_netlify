@@ -1,0 +1,25 @@
+# Настройки Netlify. Сборка: scripts/build.mjs (настройки → public/config, промпты → lib/generated.mjs).
+# Сайт — файлы из public/, API — функции из netlify/functions/ и netlify/edge-functions/.
+# Расчёт идёт в браузере: CSV-файлы на сервер не отправляются.
+
+[build]
+  command = "node scripts/build.mjs"
+  publish = "public"
+  functions = "netlify/functions"
+  edge_functions = "netlify/edge-functions"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+[functions]
+  node_bundler = "esbuild"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "same-origin"
+    Cache-Control = "no-store"
+    # Страница может обращаться только к своему сайту: загруженные цифры физически не уйдут на чужой адрес
+    Content-Security-Policy = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"

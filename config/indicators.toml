@@ -1,0 +1,528 @@
+# Показатели Методики (Коэффициенты_Методика_вар1_ААА.xlsx) — названия, единицы, зоны.
+# Формулы — в src/financeai/indicators.py (имена ключей совпадают). Здесь меняются только целевые зоны.
+#
+# unit:   ratio | pct (доля → %) | pp (доля → п. п.) | days | money (USD) | index (1,12 → 112%) | text
+# zones:  список правил, первое подходящее выигрывает. Условия: lt (<), le (≤), gt (>), ge (≥); правило без условий — «иначе».
+# on:     к чему применять правила — value (по умолчанию) | yoy_change (относительное изменение к прошлому году)
+#         | yoy_pp (разница к прошлому году) | имя вспомогательной величины (например, dpo_cover).
+# custom: зона считается в коде (src/financeai/zones.py), правила не нужны.
+# better: higher | lower — направление «лучше»; нужно для правила «ухудшение 3 периода подряд → жёлтая».
+# Периоды: обороты ОПУ за неполный год для рентабельности активов и капитала и оборачиваемости приводятся
+# к году (× 12 / число месяцев); долг / EBITDA и Z-модель — по LTM (последние 12 месяцев).
+
+# ---------- 0. Базовые ----------
+[ebit]
+name = "EBIT"
+block = "base"
+unit = "money"
+formula = "[Profit before tax] + [Interest expense_forEbitda]"
+
+[ebitda]
+name = "EBITDA"
+block = "base"
+unit = "money"
+formula = "EBIT + [Amortisation_forEbitda]"
+
+[tax_rate]
+name = "Эффективная ставка налога (T)"
+block = "base"
+unit = "pct"
+formula = "Налог на прибыль / прибыль до налогообложения"
+norm = ["Справочно", "—", "Резкий рост (> 10 п. п. к прошлому году)"]
+on = "yoy_pp"
+zones = [{ zone = "R", gt = 0.10 }, { zone = "G" }]
+
+# ---------- 1. Имущественное положение и рост ----------
+[golden_rule]
+name = "«Золотое правило» роста"
+block = "growth"
+unit = "text"
+formula = "T_EBIT > T_выручки > T_активов > 100%"
+norm = ["Выполняется", "Нарушено одно звено", "Активы растут быстрее выручки, EBIT падает"]
+custom = true
+
+[t_assets]
+name = "Темп изменения активов"
+block = "growth"
+unit = "index"
+formula = "Активы на конец / активы год назад"
+
+[t_sales]
+name = "Темп изменения выручки"
+block = "growth"
+unit = "index"
+formula = "Выручка / выручка за тот же период прошлого года"
+
+[t_ebit]
+name = "Темп изменения EBIT"
+block = "growth"
+unit = "index"
+formula = "EBIT / EBIT за тот же период прошлого года"
+
+[net_assets]
+name = "Чистые активы"
+block = "growth"
+unit = "money"
+formula = "Активы − все обязательства"
+norm = ["Растут, больше уставного капитала", "Снижаются", "Меньше уставного или отрицательные"]
+custom = true
+better = "higher"
+
+[nca_share]
+name = "Доля внеоборотных активов"
+block = "growth"
+unit = "pct"
+formula = "Внеоборотные активы / активы"
+norm = ["≤ 30%", "30–40%", "> 40%"]
+zones = [{ zone = "G", le = 0.30 }, { zone = "Y", le = 0.40 }, { zone = "R" }]
+better = "lower"
+
+[inventory_share]
+name = "Доля запасов в активах"
+block = "growth"
+unit = "pct"
+formula = "Запасы / активы"
+norm = ["Не растёт 2 периода подряд", "Рост 2 периода подряд", "Рост 3+ периода при падении выручки"]
+custom = true
+better = "lower"
+
+# ---------- 2. Ликвидность ----------
+[current_ratio]
+name = "Текущая ликвидность (КТЛ)"
+block = "liquidity"
+unit = "ratio"
+formula = "Текущие активы / текущие обязательства"
+norm = ["1,0–2,0", "0,8–1,0 или > 2,0", "< 0,8"]
+# Методика: З 1,0–1,5; интервал 1,5–2,0 не задан — отнесён к зелёной зоне.
+zones = [{ zone = "R", lt = 0.8 }, { zone = "Y", lt = 1.0 }, { zone = "G", le = 2.0 }, { zone = "Y" }]
+better = "higher"
+
+[quick_ratio]
+name = "Быстрая ликвидность"
+block = "liquidity"
+unit = "ratio"
+formula = "(Текущие активы − запасы) / текущие обязательства"
+norm = ["≥ 0,6", "0,4–0,6", "< 0,4"]
+zones = [{ zone = "R", lt = 0.4 }, { zone = "Y", lt = 0.6 }, { zone = "G" }]
+better = "higher"
+
+[cash_ratio]
+name = "Абсолютная ликвидность"
+block = "liquidity"
+unit = "ratio"
+formula = "Денежные средства / текущие обязательства"
+norm = ["0,05–0,2", "< 0,05 или > 0,2 (неработающие деньги)", "< 0,02"]
+zones = [{ zone = "R", lt = 0.02 }, { zone = "Y", lt = 0.05 }, { zone = "G", le = 0.2 }, { zone = "Y" }]
+
+[balance_liquidity]
+name = "Ликвидность баланса"
+block = "liquidity"
+unit = "ratio"
+formula = "(ДС + 0,5 × ДЗ + 0,3 × запасы) / (КО − кратк. кредиты + 0,5 × кратк. кредиты + 0,3 × ДО)"
+norm = ["≥ 0,7", "0,5–0,7", "< 0,5"]
+zones = [{ zone = "R", lt = 0.5 }, { zone = "Y", lt = 0.7 }, { zone = "G" }]
+better = "higher"
+
+[nwc]
+name = "Чистый рабочий капитал"
+block = "liquidity"
+unit = "money"
+formula = "Текущие активы − текущие обязательства"
+norm = ["Стабилен при росте продаж", "Растёт быстрее выручки", "Отрицательный при росте банковских кредитов"]
+custom = true
+
+[non_cash_wc]
+name = "Неденежный рабочий капитал"
+block = "liquidity"
+unit = "money"
+formula = "Текущие активы − ДС − текущие обязательства"
+norm = ["Отрицательный или около нуля", "Положительный, растёт", "Растёт быстрее выручки"]
+custom = true
+
+# ---------- 3. Финансовая устойчивость ----------
+[autonomy]
+name = "Коэффициент автономии"
+block = "stability"
+unit = "ratio"
+formula = "Собственный капитал / активы"
+norm = ["≥ 0,30", "0,20–0,30", "< 0,20"]
+zones = [{ zone = "R", lt = 0.2 }, { zone = "Y", lt = 0.3 }, { zone = "G" }]
+better = "higher"
+
+[fin_dependence]
+name = "Финансовая зависимость (КФЗ)"
+block = "stability"
+unit = "ratio"
+formula = "Все обязательства / активы"
+norm = ["≤ 0,70", "0,70–0,80", "> 0,80"]
+zones = [{ zone = "G", le = 0.7 }, { zone = "Y", le = 0.8 }, { zone = "R" }]
+better = "lower"
+
+[leverage]
+name = "Финансовый рычаг (D/E)"
+block = "stability"
+unit = "ratio"
+formula = "Все обязательства / собственный капитал"
+norm = ["≤ 2,5", "2,5–4,0", "> 4,0"]
+zones = [{ zone = "G", le = 2.5 }, { zone = "Y", le = 4.0 }, { zone = "R" }]
+better = "lower"
+
+[bank_debt_share]
+name = "Доля банковского долга"
+block = "stability"
+unit = "ratio"
+formula = "Банковские кредиты / (собственный капитал + банковские кредиты)"
+norm = ["≤ 0,40", "0,40–0,60", "> 0,60"]
+zones = [{ zone = "G", le = 0.4 }, { zone = "Y", le = 0.6 }, { zone = "R" }]
+
+[icr]
+name = "Покрытие банковских процентов"
+block = "stability"
+unit = "ratio"
+formula = "EBIT / [Interest expense_forEbitda]"
+norm = ["> 4", "2–4", "< 2 (< 1 — дефолт)"]
+zones = [{ zone = "G", gt = 4 }, { zone = "Y", ge = 2 }, { zone = "R" }]
+better = "higher"
+
+[bank_debt_ebitda]
+name = "Банковский долг / EBITDA (LTM)"
+block = "stability"
+unit = "ratio"
+formula = "Банковские кредиты / EBITDA за 12 месяцев"
+norm = ["≤ 2,5", "2,5–3,5", "> 3,5"]
+zones = [{ zone = "G", le = 2.5 }, { zone = "Y", le = 3.5 }, { zone = "R" }]
+better = "lower"
+
+[net_bank_debt_ebitda]
+name = "Чистый банковский долг / EBITDA (LTM)"
+block = "stability"
+unit = "ratio"
+formula = "(Банковские кредиты − ДС) / EBITDA за 12 месяцев"
+norm = ["≤ 2,0", "2,0–3,0", "> 3,0"]
+zones = [{ zone = "G", le = 2.0 }, { zone = "Y", le = 3.0 }, { zone = "R" }]
+
+[fin_stab_current]
+name = "Текущая финансовая устойчивость"
+block = "stability"
+unit = "text"
+formula = "Абс.: ДС ≥ КЗ; норм.: ДС + ДЗ ≥ КЗ; мин.: ДС + ДЗ + запасы ≥ КЗ; иначе кризисная"
+norm = ["Абсолютная / нормальная", "Минимальная", "Кризисная"]
+custom = true
+
+[fin_stab_short]
+name = "Краткосрочная финансовая устойчивость"
+block = "stability"
+unit = "text"
+formula = "Та же проверка для КЗ + краткосрочные кредиты"
+norm = ["Абсолютная / нормальная", "Минимальная", "Кризисная"]
+custom = true
+
+[fin_stab_long]
+name = "Долгосрочная финансовая устойчивость"
+block = "stability"
+unit = "text"
+formula = "Та же проверка для КЗ + все кредиты"
+norm = ["Нормальная / минимальная", "—", "Кризисная"]
+custom = true
+
+# ---------- 4. Деловая активность и оборотный капитал ----------
+[dio]
+name = "Период оборота запасов (DIO)"
+block = "activity"
+unit = "days"
+formula = "Средние запасы / себестоимость × дни периода"
+norm = ["≤ 45 дн.", "45–60 дн.", "> 60 дн."]
+zones = [{ zone = "G", le = 45 }, { zone = "Y", le = 60 }, { zone = "R" }]
+better = "lower"
+
+[dso]
+name = "Период оборота дебиторской задолженности (DSO)"
+block = "activity"
+unit = "days"
+formula = "Средняя ДЗ / выручка × дни периода"
+norm = ["≤ 20 дн.", "20–35 дн.", "> 35 дн."]
+zones = [{ zone = "G", le = 20 }, { zone = "Y", le = 35 }, { zone = "R" }]
+better = "lower"
+
+[dpo]
+name = "Период оборота кредиторской задолженности (DPO)"
+block = "activity"
+unit = "days"
+formula = "Средняя КЗ / себестоимость × дни периода"
+norm = ["≥ DIO + DSO", "Покрывает 50–100% цикла", "< 50% цикла"]
+on = "dpo_cover"
+zones = [{ zone = "G", ge = 1.0 }, { zone = "Y", ge = 0.5 }, { zone = "R" }]
+better = "higher"
+
+[ccc]
+name = "Денежный цикл (CCC)"
+block = "activity"
+unit = "days"
+formula = "DSO + DIO − DPO"
+norm = ["≤ 0 дн.", "0–30 дн.", "> 30 дн."]
+zones = [{ zone = "G", le = 0 }, { zone = "Y", le = 30 }, { zone = "R" }]
+better = "lower"
+
+[asset_turnover]
+name = "Оборачиваемость активов"
+block = "activity"
+unit = "ratio"
+formula = "Выручка (годовая) / средние активы"
+norm = ["≥ 2,5", "1,8–2,5", "< 1,8"]
+zones = [{ zone = "G", ge = 2.5 }, { zone = "Y", ge = 1.8 }, { zone = "R" }]
+better = "higher"
+
+[ca_turnover]
+name = "Оборачиваемость оборотных активов"
+block = "activity"
+unit = "ratio"
+formula = "Выручка (годовая) / средние текущие активы"
+norm = ["Растёт (> +2%)", "Стабильна (±2%)", "Падает"]
+on = "yoy_change"
+zones = [{ zone = "G", gt = 0.02 }, { zone = "Y", ge = -0.02 }, { zone = "R" }]
+
+[nca_turnover]
+name = "Оборачиваемость внеоборотных активов"
+block = "activity"
+unit = "ratio"
+formula = "Выручка (годовая) / средние внеоборотные активы"
+norm = ["Растёт (> +2%)", "Стабильна (±2%)", "Падает"]
+on = "yoy_change"
+zones = [{ zone = "G", gt = 0.02 }, { zone = "Y", ge = -0.02 }, { zone = "R" }]
+
+[equity_turnover]
+name = "Оборачиваемость собственного капитала"
+block = "activity"
+unit = "ratio"
+formula = "Выручка (годовая) / средний собственный капитал"
+norm = ["Растёт (> +2%)", "Стабильна (±2%)", "Падает"]
+on = "yoy_change"
+zones = [{ zone = "G", gt = 0.02 }, { zone = "Y", ge = -0.02 }, { zone = "R" }]
+
+[sales_nwc]
+name = "Выручка / чистый рабочий капитал"
+block = "activity"
+unit = "ratio"
+formula = "Выручка (годовая) / ЧРК"
+norm = ["Растёт", "Снижается (до −20%)", "Резко снижается (> −20%)"]
+on = "yoy_change"
+zones = [{ zone = "G", ge = 0 }, { zone = "Y", ge = -0.2 }, { zone = "R" }]
+
+[overtrading]
+name = "Тест на овертрейдинг"
+block = "activity"
+unit = "text"
+formula = "Рост выручки > 20% + рост ТО и запасов + (запасы + ДЗ) > выручки за 3 мес. + падение КТЛ"
+norm = ["Признаков нет", "1–2 признака", "3 и более"]
+custom = true
+
+# ---------- 5. Рентабельность ----------
+[gross_margin]
+name = "Валовая маржа"
+block = "profitability"
+unit = "pct"
+formula = "Валовая прибыль / выручка"
+norm = ["Не ниже прошлого года (бюджета)", "Снижение на 1–2 п. п.", "Снижение > 2 п. п."]
+on = "yoy_pp"
+zones = [{ zone = "G", gt = -0.01 }, { zone = "Y", ge = -0.02 }, { zone = "R" }]
+better = "higher"
+
+[ebitda_margin]
+name = "Рентабельность по EBITDA"
+block = "profitability"
+unit = "pct"
+formula = "EBITDA / выручка"
+norm = ["≥ 5%", "3–5%", "< 3%"]
+zones = [{ zone = "G", ge = 0.05 }, { zone = "Y", ge = 0.03 }, { zone = "R" }]
+better = "higher"
+
+[ebit_margin]
+name = "Рентабельность по EBIT (OM)"
+block = "profitability"
+unit = "pct"
+formula = "EBIT / выручка"
+norm = ["≥ 4%", "2–4%", "< 2%"]
+zones = [{ zone = "G", ge = 0.04 }, { zone = "Y", ge = 0.02 }, { zone = "R" }]
+better = "higher"
+
+[net_margin]
+name = "Чистая рентабельность"
+block = "profitability"
+unit = "pct"
+formula = "Чистая прибыль / выручка"
+norm = ["≥ 2,5%", "1–2,5%", "< 1%"]
+zones = [{ zone = "G", ge = 0.025 }, { zone = "Y", ge = 0.01 }, { zone = "R" }]
+better = "higher"
+
+[roa_star]
+name = "Экономическая рентабельность активов (ROA*)"
+block = "profitability"
+unit = "pct"
+formula = "EBIT (годовой) / средние активы"
+norm = ["≥ 10%", "6–10%", "< 6%"]
+zones = [{ zone = "G", ge = 0.10 }, { zone = "Y", ge = 0.06 }, { zone = "R" }]
+better = "higher"
+
+[roa_investors]
+name = "ROA для инвесторов"
+block = "profitability"
+unit = "pct"
+formula = "(Чистая прибыль + банк. проценты × (1 − T)) (годовые) / средние активы"
+norm = ["Растёт (> +0,5 п. п.)", "Стабильна", "Падает (< −0,5 п. п.)"]
+on = "yoy_pp"
+zones = [{ zone = "G", gt = 0.005 }, { zone = "Y", ge = -0.005 }, { zone = "R" }]
+
+[roce]
+name = "Рентабельность используемого капитала (ROCE)"
+block = "profitability"
+unit = "pct"
+formula = "EBIT (годовой) / средний (собственный капитал + долгосрочные обязательства)"
+norm = ["≥ 20%", "WACC–20%", "< WACC"]
+custom = true
+better = "higher"
+
+[roe]
+name = "Рентабельность собственного капитала (ROE)"
+block = "profitability"
+unit = "pct"
+formula = "Чистая прибыль (годовая) / средний собственный капитал"
+norm = ["≥ 25%", "15–25%", "< 15% или < ставки по кредитам"]
+custom = true
+better = "higher"
+
+# ---------- 6. Стоимость капитала ----------
+[r_d]
+name = "Ставка банковского финансирования (r_D)"
+block = "capital"
+unit = "pct"
+formula = "Банковские проценты (годовые) / средние банковские кредиты"
+norm = ["Ниже рыночной", "На уровне рынка (±1 п. п.)", "Выше рынка"]
+custom = true
+
+[r_e]
+name = "Стоимость собственного капитала (r_E = ROE)"
+block = "capital"
+unit = "pct"
+formula = "Принимается равной ROE"
+
+[wacc]
+name = "WACC"
+block = "capital"
+unit = "pct"
+formula = "r_E × E / (E + D) + r_D × D / (E + D) × (1 − T); D — банковские кредиты"
+
+[spread_roce_wacc]
+name = "Спред ROCE − WACC"
+block = "capital"
+unit = "pp"
+formula = "ROCE − WACC"
+norm = ["> 5 п. п.", "0–5 п. п.", "< 0"]
+zones = [{ zone = "G", gt = 0.05 }, { zone = "Y", ge = 0 }, { zone = "R" }]
+better = "higher"
+
+[i_rate]
+name = "Ставка по всем обязательствам (i)"
+block = "capital"
+unit = "pct"
+formula = "Банковские проценты (годовые) / средние обязательства"
+
+[differential]
+name = "Дифференциал финансового рычага (ROA* − i)"
+block = "capital"
+unit = "pp"
+formula = "ROA* − i"
+norm = ["≥ 5 п. п.", "0–5 п. п.", "< 0"]
+zones = [{ zone = "G", ge = 0.05 }, { zone = "Y", ge = 0 }, { zone = "R" }]
+better = "higher"
+
+# ---------- 7. Рычаги и операционный риск ----------
+[dol]
+name = "Сила операционного рычага (DOL)"
+block = "levers"
+unit = "ratio"
+formula = "% изменения EBIT / % изменения выручки (к прошлому году)"
+norm = ["≤ 3", "3–5", "> 5 или отрицательный"]
+zones = [{ zone = "R", lt = 0 }, { zone = "G", le = 3 }, { zone = "Y", le = 5 }, { zone = "R" }]
+
+[margin_safety]
+name = "Маржа безопасности"
+block = "levers"
+unit = "pct"
+formula = "1 / DOL"
+norm = ["≥ 33%", "20–33%", "< 20%"]
+zones = [{ zone = "G", ge = 0.33 }, { zone = "Y", ge = 0.2 }, { zone = "R" }]
+
+[bep]
+name = "Точка безубыточности (экспресс)"
+block = "levers"
+unit = "money"
+formula = "Выручка × (1 − 1 / DOL)"
+norm = ["Ниже выручки слабых месяцев", "Близка к ней (±10%)", "Выше неё"]
+custom = true
+
+[dfl]
+name = "Сила финансового рычага (DFL)"
+block = "levers"
+unit = "ratio"
+formula = "EBIT / прибыль до налогообложения"
+norm = ["≤ 1,5", "1,5–3", "> 3 или < 0"]
+zones = [{ zone = "R", lt = 0 }, { zone = "G", le = 1.5 }, { zone = "Y", le = 3 }, { zone = "R" }]
+better = "lower"
+
+[dtl]
+name = "Сопряжённый рычаг (DTL)"
+block = "levers"
+unit = "ratio"
+formula = "DOL × DFL"
+norm = ["≤ 4", "4–8", "> 8"]
+zones = [{ zone = "R", lt = 0 }, { zone = "G", le = 4 }, { zone = "Y", le = 8 }, { zone = "R" }]
+
+# ---------- 8. Факторный анализ ----------
+[tb]
+name = "Налоговое бремя (TB)"
+block = "factor"
+unit = "ratio"
+formula = "Чистая прибыль / прибыль до налогообложения"
+
+[ib]
+name = "Банковское процентное бремя (IB)"
+block = "factor"
+unit = "ratio"
+formula = "Прибыль до налогообложения / EBIT"
+
+[lr]
+name = "Коэффициент капитализации (LR)"
+block = "factor"
+unit = "ratio"
+formula = "Средние активы / средний собственный капитал"
+
+[roe_leverage]
+name = "ROE через финансовый рычаг"
+block = "factor"
+unit = "pct"
+formula = "(1 − T) × ROA* + (1 − T) × (ROA* − i) × D / E"
+
+[ce_turnover]
+name = "Оборачиваемость используемого капитала (S / CE)"
+block = "factor"
+unit = "ratio"
+formula = "Выручка (годовая) / средний (E + LTL)"
+
+# ---------- 9. Вероятность банкротства ----------
+[z5]
+name = "Z-модель Альтмана, 5 факторов"
+block = "bankruptcy"
+unit = "ratio"
+formula = "0,717·X1 + 0,847·X2 + 3,107·X3 + 0,42·X4 + 0,995·X5 (ОПУ — LTM)"
+norm = ["> 2,9", "1,23–2,9", "< 1,23"]
+zones = [{ zone = "G", gt = 2.9 }, { zone = "Y", ge = 1.23 }, { zone = "R" }]
+better = "higher"
+
+[z2]
+name = "Z-модель, 2 фактора"
+block = "bankruptcy"
+unit = "ratio"
+formula = "−0,3877 − 1,0736 × КТЛ + 0,579 × КФЗ"
+norm = ["< −1,0", "от −1,0 до 0", "> 0"]
+zones = [{ zone = "G", lt = -1.0 }, { zone = "Y", le = 0 }, { zone = "R" }]
+better = "lower"

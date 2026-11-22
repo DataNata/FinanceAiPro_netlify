@@ -1,0 +1,80 @@
+# Интегральная оценка — раздел 6 Методики.
+
+[points]
+G = 2
+Y = 1
+R = 0
+
+[blocks.growth]
+name = "Имущественное положение и рост"
+weight = 0.05
+indicators = ["golden_rule", "net_assets"]
+report = ["golden_rule", "t_sales", "t_ebit", "t_assets", "net_assets", "nca_share", "inventory_share"]
+
+[blocks.liquidity]
+name = "Ликвидность"
+weight = 0.15
+indicators = ["current_ratio", "quick_ratio", "balance_liquidity"]
+report = ["current_ratio", "quick_ratio", "cash_ratio", "balance_liquidity", "nwc", "non_cash_wc"]
+
+[blocks.stability]
+name = "Финансовая устойчивость"
+weight = 0.15
+indicators = ["autonomy", "leverage", "icr", "bank_debt_ebitda", "fin_stab_current"]
+report = ["autonomy", "fin_dependence", "leverage", "bank_debt_share", "icr", "bank_debt_ebitda", "net_bank_debt_ebitda", "fin_stab_current", "fin_stab_short", "fin_stab_long"]
+
+[blocks.activity]
+name = "Деловая активность"
+weight = 0.20
+indicators = ["dio", "dso", "ccc", "asset_turnover"]
+report = ["dio", "dso", "dpo", "ccc", "asset_turnover", "ca_turnover", "nca_turnover", "equity_turnover", "sales_nwc", "overtrading"]
+
+[blocks.profitability]
+name = "Рентабельность"
+weight = 0.25
+indicators = ["ebit_margin", "roa_star", "roce", "roe"]
+report = ["gross_margin", "ebitda_margin", "ebit_margin", "net_margin", "roa_star", "roa_investors", "roce", "roe", "tax_rate"]
+
+[blocks.capital]
+name = "Рычаги и стоимость капитала"
+weight = 0.10
+indicators = ["dol", "dtl", "differential", "spread_roce_wacc"]
+report = ["r_d", "r_e", "wacc", "spread_roce_wacc", "i_rate", "differential", "dol", "margin_safety", "bep", "dfl", "dtl"]
+
+[blocks.bankruptcy]
+name = "Вероятность банкротства"
+weight = 0.10
+indicators = ["z5", "z2"]
+report = ["z5", "z2"]
+
+# Порядок блоков в отчёте
+[order]
+blocks = ["profitability", "activity", "liquidity", "stability", "capital", "bankruptcy", "growth"]
+
+[[classes]]
+code = "A"
+min = 80
+name = "Устойчивое"
+reaction = "Плановый режим"
+
+[[classes]]
+code = "B"
+min = 60
+name = "Удовлетворительное"
+reaction = "Работа над показателями жёлтой зоны в рамках бюджета"
+
+[[classes]]
+code = "C"
+min = 40
+name = "Неустойчивое"
+reaction = "План корректирующих мероприятий за 30 дней, ежемесячный мониторинг"
+
+[[classes]]
+code = "D"
+min = 0
+name = "Кризисное"
+reaction = "Антикризисный план, мораторий на новые кредиты и капитальные затраты"
+
+[stop]
+# При стоп-факторе класс не выше этого
+max_class = "C"

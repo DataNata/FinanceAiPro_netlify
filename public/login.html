@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Вход · Финансовое состояние группы</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<style>
+:root { --page: #f9f9f7; --surface: #ffffff; --ink: #0b0b0b; --ink-2: #52514e; --border: #e3e2de; --accent: #2a5bd7; --crit: #b42323; }
+@media (prefers-color-scheme: dark) { :root { --page: #121212; --surface: #1c1c1c; --ink: #f2f2f0; --ink-2: #b4b3ae; --border: #333; --accent: #7aa2ff; --crit: #ff8a8a; } }
+* { box-sizing: border-box; }
+body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: var(--page); color: var(--ink);
+  font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; padding: 16px; }
+form { width: min(380px, 100%); background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 28px; }
+h1 { font-size: 20px; margin: 0 0 6px; }
+p { color: var(--ink-2); margin: 0 0 18px; font-size: 14px; }
+label { display: block; font-size: 13px; color: var(--ink-2); margin-bottom: 6px; }
+input { width: 100%; font: inherit; font-size: 18px; letter-spacing: 2px; padding: 10px 12px; border: 1px solid var(--border);
+  border-radius: 8px; background: var(--page); color: var(--ink); }
+button { width: 100%; margin-top: 14px; font: inherit; font-weight: 600; padding: 10px; border: 0; border-radius: 8px;
+  background: var(--accent); color: #fff; cursor: pointer; }
+.error { color: var(--crit); font-size: 14px; margin: 0 0 12px; }
+.note { font-size: 12px; margin: 16px 0 0; }
+</style>
+</head>
+<body>
+<form method="post" action="/api/login">
+  <h1>Финансовое состояние группы</h1>
+  <p>Введите код доступа.</p>
+  <div class="error" id="loginError" hidden></div>
+  <label for="code">Код доступа</label>
+  <input type="password" id="code" name="code" inputmode="numeric" autocomplete="current-password" required autofocus>
+  <button type="submit">Войти</button>
+  <p class="note">🔒 Загруженные файлы обрабатываются в вашем браузере и на сервер не отправляются.</p>
+</form>
+<script src="/login.js"></script>
+</body>
+</html>

@@ -1,0 +1,402 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Финансовое состояние группы</title>
+<!-- Панель FinanceAiPro (JavaScript-версия для Netlify). Расчёт — в браузере (app/*.js), CSV-файлы на сервер
+     не отправляются; на сервер уходят только посчитанные показатели — по кнопке «Сформировать заключение». -->
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<style>
+:root {
+  --page: #f9f9f7; --surface: #fcfcfb; --raised: #ffffff;
+  --ink: #0b0b0b; --ink-2: #52514e; --muted: #898781;
+  --grid: #e1e0d9; --axis: #c3c2b7; --border: rgba(11,11,11,0.10);
+  --accent: #2a78d6; --accent-soft: rgba(42,120,214,0.10);
+  --good: #0ca30c; --warn: #fab219; --serious: #ec835a; --crit: #d03b3b;
+  --good-text: #006300; --crit-text: #b42323;
+  --good-bg: rgba(12,163,12,0.12); --warn-bg: rgba(250,178,25,0.20); --crit-bg: rgba(208,59,59,0.13);
+  --shadow: 0 1px 2px rgba(11,11,11,0.04), 0 4px 16px rgba(11,11,11,0.05);
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --page: #0d0d0d; --surface: #1a1a19; --raised: #222220;
+    --ink: #f0efec; --ink-2: #c3c2b7; --muted: #898781;
+    --grid: #2c2c2a; --axis: #383835; --border: rgba(255,255,255,0.10);
+    --accent: #3987e5; --accent-soft: rgba(57,135,229,0.16);
+    --good-text: #0ca30c; --crit-text: #ec6a6a;
+    --good-bg: rgba(12,163,12,0.20); --warn-bg: rgba(250,178,25,0.20); --crit-bg: rgba(208,59,59,0.24);
+    --shadow: none; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --page: #0d0d0d; --surface: #1a1a19; --raised: #222220;
+  --ink: #f0efec; --ink-2: #c3c2b7; --muted: #898781;
+  --grid: #2c2c2a; --axis: #383835; --border: rgba(255,255,255,0.10);
+  --accent: #3987e5; --accent-soft: rgba(57,135,229,0.16);
+  --good-text: #0ca30c; --crit-text: #ec6a6a;
+  --good-bg: rgba(12,163,12,0.20); --warn-bg: rgba(250,178,25,0.20); --crit-bg: rgba(208,59,59,0.24);
+  --shadow: none; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--page); color: var(--ink);
+  font: 14px/1.45 "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif; }
+.wrap { max-width: 1440px; margin: 0 auto; padding: 0 24px 48px; }
+h1 { font-size: 22px; font-weight: 650; margin: 0; letter-spacing: -0.01em; }
+h2 { font-size: 15px; font-weight: 650; margin: 0 0 12px; }
+.sub { color: var(--ink-2); font-size: 13px; }
+.srcnote { display: none; margin: -4px 0 14px; padding: 8px 12px; border-radius: 8px; font-size: 13px;
+  background: var(--warn-bg); border: 1px solid var(--warn); color: var(--ink); }
+.srcnote.on { display: block; }
+.muted { color: var(--muted); }
+header.top { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 20px 0 16px; }
+.btn { appearance: none; border: 1px solid var(--border); background: var(--raised); color: var(--ink);
+  border-radius: 8px; padding: 7px 12px; font: inherit; font-size: 13px; cursor: pointer; display: inline-flex;
+  align-items: center; gap: 6px; text-decoration: none; }
+.btn:hover { border-color: var(--accent); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn.primary:hover { filter: brightness(1.08); }
+.btn:focus-visible, select:focus-visible, input:focus-visible, .chip:focus-visible, .card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Фильтры — одной строкой над графиками */
+.filters { position: sticky; top: 0; z-index: 20; background: var(--page); padding: 10px 0 12px;
+  display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; border-bottom: 1px solid var(--grid); }
+.fgroup { display: flex; align-items: center; gap: 8px; }
+.flabel { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+.seg { display: inline-flex; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 2px; }
+.seg button { border: 0; background: transparent; color: var(--ink-2); font: inherit; font-size: 13px; padding: 5px 12px;
+  border-radius: 6px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--raised); color: var(--ink); box-shadow: 0 0 0 1px var(--border); font-weight: 600; }
+select, input[type="search"] { font: inherit; font-size: 13px; color: var(--ink); background: var(--raised);
+  border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { border: 1px solid var(--border); background: var(--raised); color: var(--ink-2); border-radius: 999px;
+  padding: 4px 11px; font-size: 13px; cursor: pointer; -webkit-user-select: none; user-select: none; }
+.chip[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--ink); }
+
+section { margin-top: 20px; }
+.panel { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px; box-shadow: var(--shadow); }
+.grid2 { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 20px; }
+@media (max-width: 1000px) { .grid2 { grid-template-columns: 1fr; } }
+
+/* KPI */
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
+.kpi { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; box-shadow: var(--shadow); }
+.kpi .v { font-size: 26px; font-weight: 650; letter-spacing: -0.02em; margin-top: 2px; }
+.kpi .l { font-size: 12px; color: var(--muted); }
+.classbar { display: flex; height: 8px; border-radius: 4px; overflow: hidden; gap: 2px; margin-top: 10px; }
+.classbar span { display: block; height: 100%; }
+
+/* Карточки компаний */
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px; cursor: pointer;
+  box-shadow: var(--shadow); transition: border-color .15s, transform .15s; position: relative; }
+.card:hover { border-color: var(--accent); transform: translateY(-1px); }
+.card[aria-selected="true"] { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft), var(--shadow); }
+.card .row { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.card .name { font-weight: 600; }
+.card .country { font-size: 12px; color: var(--muted); }
+.card .score { font-size: 30px; font-weight: 650; letter-spacing: -0.02em; margin: 10px 0 2px; }
+.card .meter { height: 6px; background: var(--grid); border-radius: 3px; overflow: hidden; }
+.card .meter span { display: block; height: 100%; background: var(--accent); border-radius: 3px; }
+.card .foot { display: flex; gap: 10px; margin-top: 10px; font-size: 12px; color: var(--ink-2); flex-wrap: wrap; }
+.badge { display: inline-flex; align-items: center; justify-content: center; min-width: 30px; height: 30px; padding: 0 8px;
+  border-radius: 8px; font-weight: 700; font-size: 15px; color: #fff; }
+.badge.A { background: var(--good); } .badge.B { background: var(--warn); color: #0b0b0b; }
+.badge.C { background: var(--serious); color: #0b0b0b; } .badge.D { background: var(--crit); }
+.badge.sm { min-width: 22px; height: 22px; font-size: 12px; border-radius: 6px; }
+.delta.up { color: var(--good-text); } .delta.down { color: var(--crit-text); }
+
+/* Зоны: цвет + буква, никогда не только цвет */
+.zone { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; padding: 2px 8px;
+  border-radius: 999px; white-space: nowrap; }
+.zone::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+.zone.G { background: var(--good-bg); color: var(--good-text); }
+.zone.Y { background: var(--warn-bg); color: var(--ink); }
+.zone.Y::before { background: var(--warn); }
+.zone.R { background: var(--crit-bg); color: var(--crit-text); }
+.zone.N { background: transparent; color: var(--muted); }
+
+/* Тепловая карта */
+.heat { width: 100%; border-collapse: separate; border-spacing: 2px; font-size: 13px; }
+.heat th { font-size: 11px; font-weight: 600; color: var(--muted); text-align: center; padding: 4px 6px; vertical-align: bottom; }
+.heat th.rowh { text-align: left; }
+.heat td { padding: 7px 6px; text-align: center; border-radius: 6px; white-space: nowrap; }
+.heat td.name { text-align: left; font-weight: 600; cursor: pointer; white-space: nowrap; padding-left: 4px; }
+.heat td.cell { cursor: default; }
+.heat td.G { background: var(--good-bg); } .heat td.Y { background: var(--warn-bg); } .heat td.R { background: var(--crit-bg); }
+.heat td.N { background: transparent; color: var(--muted); }
+.heat tr.sel td.name { color: var(--accent); }
+.scroll-x { overflow-x: auto; }
+
+/* Детали компании */
+.dhead { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+.dhead .big { font-size: 34px; font-weight: 650; letter-spacing: -0.02em; }
+.dhead .badge { min-width: 44px; height: 44px; font-size: 22px; border-radius: 10px; }
+.sums { display: flex; flex-wrap: wrap; gap: 8px 22px; margin-top: 12px; font-size: 13px; }
+.sums b { font-weight: 600; }
+.stop { background: var(--crit-bg); border-radius: 8px; padding: 8px 12px; margin-top: 12px; font-size: 13px; color: var(--ink); }
+.stop strong { color: var(--crit-text); }
+.bars { display: grid; gap: 9px; }
+.bar { display: grid; grid-template-columns: 210px 1fr 44px; gap: 10px; align-items: center; font-size: 13px; }
+.bar .track { height: 10px; background: var(--grid); border-radius: 0 4px 4px 0; position: relative; }
+.bar .fill { position: absolute; left: 0; top: 0; bottom: 0; background: var(--accent); border-radius: 0 4px 4px 0; }
+.bar .val { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar .w { color: var(--muted); font-size: 12px; }
+@media (max-width: 600px) { .bar { grid-template-columns: 130px 1fr 40px; } }
+.signals { display: grid; gap: 8px; }
+.sig { border: 1px solid var(--border); border-left-width: 4px; border-radius: 8px; padding: 8px 12px; font-size: 13px; }
+.sig.R { border-left-color: var(--crit); } .sig.Y { border-left-color: var(--warn); }
+.sig .t { font-weight: 600; } .sig .m { color: var(--ink-2); margin-top: 2px; }
+svg text { fill: var(--muted); font-size: 11px; font-family: inherit; }
+
+/* Таблица показателей */
+.ind { width: 100%; border-collapse: collapse; font-size: 13px; }
+.ind th { text-align: left; font-size: 12px; font-weight: 600; color: var(--muted); padding: 8px; border-bottom: 1px solid var(--axis); position: sticky; top: 0; background: var(--surface); }
+.ind td { padding: 7px 8px; border-bottom: 1px solid var(--grid); vertical-align: top; }
+.ind td.num { font-variant-numeric: tabular-nums; white-space: nowrap; font-weight: 600; }
+.ind tr.blk td { background: var(--page); font-weight: 650; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--ink-2); }
+.ind .norm { color: var(--ink-2); font-size: 12px; }
+.star { color: var(--accent); }
+.tablebox { max-height: 560px; overflow: auto; border: 1px solid var(--grid); border-radius: 8px; }
+
+/* Заключение */
+.ctools { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; align-items: center; }
+.ctools .src { margin-left: auto; font-size: 12px; color: var(--muted); }
+.editor { min-height: 320px; max-height: 640px; overflow: auto; background: var(--raised); border: 1px solid var(--border);
+  border-radius: 10px; padding: 18px 22px; font-size: 14px; line-height: 1.55; }
+.editor:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+.editor h3 { font-size: 16px; margin: 0 0 6px; } .editor h4 { font-size: 14px; margin: 16px 0 6px; }
+.editor ul { margin: 6px 0; padding-left: 20px; } .editor li { margin: 3px 0; }
+.editor table { border-collapse: collapse; width: 100%; font-size: 13px; margin-top: 6px; }
+.editor td, .editor th { border: 1px solid var(--grid); padding: 5px 8px; text-align: left; vertical-align: top; }
+.warnline { color: var(--crit-text); font-size: 13px; }
+.genstatus { font-size: 13px; margin: -4px 0 10px; color: var(--ink-2); }
+.genstatus:empty { display: none; }
+.genstatus.info { background: var(--accent-soft); border-radius: 8px; padding: 8px 12px; }
+.genstatus.err { background: var(--crit-bg); border-radius: 8px; padding: 8px 12px; color: var(--ink); }
+.btn[disabled] { opacity: .6; cursor: progress; }
+.tag { display: inline-block; font-size: 11px; padding: 1px 7px; border-radius: 999px; background: var(--warn-bg); color: var(--ink); margin-left: 6px; }
+.hint { font-size: 12px; color: var(--muted); margin-top: 8px; }
+
+#tip { position: fixed; z-index: 50; pointer-events: none; background: var(--raised); color: var(--ink); border: 1px solid var(--border);
+  border-radius: 8px; padding: 8px 10px; font-size: 12px; max-width: 320px; box-shadow: 0 6px 24px rgba(0,0,0,.18); display: none; }
+#tip b { font-weight: 650; }
+.empty { color: var(--muted); padding: 20px; text-align: center; }
+.toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--ink); color: var(--page);
+  padding: 8px 16px; border-radius: 8px; font-size: 13px; opacity: 0; transition: opacity .2s; pointer-events: none; }
+.toast.on { opacity: 1; }
+/* Загрузка данных */
+dialog.up { border: 1px solid var(--border); border-radius: 12px; padding: 0; width: min(640px, calc(100vw - 32px));
+  background: var(--surface); color: var(--ink); box-shadow: 0 12px 48px rgba(0,0,0,.25); }
+dialog.up::backdrop { background: rgba(0,0,0,.35); }
+.up .uphead { display: flex; justify-content: space-between; align-items: center; padding: 16px 18px 0; }
+.up .upbody { padding: 12px 18px 18px; }
+.up .x { appearance: none; border: 0; background: none; color: var(--muted); font-size: 20px; cursor: pointer; line-height: 1; }
+.drops { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 10px 0; }
+@media (max-width: 600px) { .drops { grid-template-columns: 1fr; } }
+.drop { border: 2px dashed var(--axis); border-radius: 10px; padding: 14px; text-align: center; cursor: pointer;
+  background: var(--raised); min-height: 104px; display: flex; flex-direction: column; justify-content: center; gap: 4px; }
+.drop:hover, .drop.over { border-color: var(--accent); background: var(--accent-soft); }
+.drop.ok { border-style: solid; border-color: var(--good); }
+.drop b { font-size: 14px; } .drop .fn { font-size: 12px; color: var(--ink-2); word-break: break-all; }
+.drop input { display: none; }
+.uperr { background: var(--crit-bg); border-radius: 8px; padding: 8px 12px; font-size: 13px; margin: 8px 0; }
+.uperr ul { margin: 4px 0 0; padding-left: 18px; max-height: 220px; overflow: auto; }
+.uperr:empty { display: none; }
+.upfmt { font-size: 12px; color: var(--ink-2); }
+.upfmt code { background: var(--accent-soft); border-radius: 4px; padding: 0 4px; }
+.upact { display: flex; gap: 8px; justify-content: flex-end; align-items: center; margin-top: 12px; flex-wrap: wrap; }
+.upact .spacer { flex: 1; }
+.tpl { border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px 12px; margin: 12px 0 0; background: var(--raised);
+  min-width: 0; }
+.tpl legend { font-size: 13px; font-weight: 650; padding: 0 4px; }
+.tpl .row { display: grid; grid-template-columns: 90px minmax(0, 1fr) 150px 150px; gap: 8px; margin: 6px 0 10px; }
+@media (max-width: 600px) { .tpl .row { grid-template-columns: 1fr 1fr; } }
+.tpl label { display: flex; flex-direction: column; gap: 3px; font-size: 12px; color: var(--ink-2); }
+.tpl input { font: inherit; font-size: 13px; padding: 5px 8px; border: 1px solid var(--border); border-radius: 6px;
+  background: var(--surface); color: var(--ink); min-width: 0; }
+.tpl .btns { display: flex; gap: 8px; flex-wrap: wrap; }
+.tplspan { font-size: 12px; color: var(--ink-2); margin: -4px 0 8px; }
+.tplspan.bad { color: var(--crit-text); font-weight: 600; }
+.minm { font-weight: 650; color: var(--ink); }
+.linkbtn { appearance: none; border: 0; background: none; color: var(--accent); font: inherit; font-size: 13px; cursor: pointer;
+  text-decoration: underline; margin-top: 10px; }
+.emptybox { text-align: center; padding: 48px 20px; }
+.samples { margin-top: 14px; font-size: 13px; color: var(--ink-2); }
+.samples .linkbtn { margin: 0 4px; }
+.updata { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 10px; font-size: 12px; color: var(--ink-2); }
+.updata .linkbtn { margin: 0; font-size: 12px; }
+.privacy { font-size: 12px; color: var(--ink-2); margin-top: 6px; }
+a.btn { text-decoration: none; display: inline-flex; align-items: center; }
+.emptybox p { color: var(--ink-2); max-width: 560px; margin: 8px auto 16px; }
+@media (max-width: 600px) { .wrap { padding: 0 16px 32px; } header.top { flex-direction: column; align-items: flex-start; } }
+@media print {
+  body * { visibility: hidden; } #conclusion, #conclusion * { visibility: visible; }
+  #conclusion { position: absolute; left: 0; top: 0; width: 100%; } .ctools { display: none; }
+  .editor { border: 0; max-height: none; overflow: visible; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Финансовое состояние компаний группы</h1>
+      <div class="sub">По ОПУ и балансу, без корректировок · Методика оценки финансового состояния · <span id="gen"></span></div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn primary" id="upBtn" title="Загрузить свои pl.csv (ОПУ) и bs.csv (баланс)">⬆ Загрузить данные</button>
+      <button class="btn" id="csvBtn" title="Показатели выбранного периода — в CSV для Excel">⬇ Показатели в Excel</button>
+      <button class="btn" id="themeBtn" aria-label="Переключить тему">◐ Тема</button>
+      <a class="btn" id="logoutBtn" href="/api/logout" style="display:none" title="Выйти (снова понадобится код доступа)">⎋ Выйти</a>
+    </div>
+  </header>
+  <div class="genstatus" id="upStatus" role="status" aria-live="polite"></div>
+
+  <section class="panel emptybox" id="emptyState" style="display:none">
+    <h2>Данные не загружены</h2>
+    <p>Загрузите два файла: <b>pl.csv</b> — ОПУ (обороты за месяц) и <b>bs.csv</b> — баланс (остатки на конец месяца).
+      Формат — одна строка на юрлицо × месяц × статью.<br>
+      <span class="minm">Нужны данные не меньше чем за <span class="minN">15</span> месяцев подряд по каждому юрлицу.</span></p>
+    <div class="uperr" id="loadErr"></div>
+    <button class="btn primary" id="upBtn2">⬆ Загрузить данные</button>
+    <div><button class="linkbtn" id="tplLink" type="button">⬇ Нет файлов? Скачайте шаблоны и заполните их</button></div>
+    <div class="samples">Посмотреть на примере: <button class="linkbtn" type="button" data-sample="alisa">«Алиса»</button>
+      · <button class="linkbtn" type="button" data-sample="mary">«ОАОМэри» (Грузия)</button> — вымышленные компании</div>
+    <p class="privacy">🔒 Файлы обрабатываются в вашем браузере и хранятся только в нём — на сервер цифры не отправляются.</p>
+  </section>
+
+  <main id="main">
+  <div class="filters" role="toolbar" aria-label="Фильтры">
+    <div class="fgroup"><span class="flabel">Вид</span>
+      <div class="seg" id="kindSeg">
+        <button data-k="M">Месяц</button><button data-k="Q">Квартал</button><button data-k="Y">Год</button>
+      </div></div>
+    <div class="fgroup"><span class="flabel">Период</span><select id="periodSel" aria-label="Период"></select></div>
+    <div class="fgroup"><span class="flabel">Страна</span><div class="chips" id="countryChips"></div></div>
+  </div>
+
+
+  <section>
+    <div class="kpis" id="kpis"></div>
+  </section>
+
+  <section>
+    <h2>Компании <span class="muted" style="font-weight:400;font-size:13px">— выберите карточку для подробностей</span></h2>
+    <div class="cards" id="cards"></div>
+  </section>
+
+  <section class="panel">
+    <h2>Ключевые показатели и зоны</h2>
+    <div class="scroll-x"><table class="heat" id="heat"></table></div>
+    <div class="hint">З — норма, Ж — внимание, К — требуются действия. Наведите на ячейку — ориентир и изменение к прошлому году.</div>
+  </section>
+
+  <section class="panel" id="detail"></section>
+
+  <section class="grid2">
+    <div class="panel">
+      <h2>Интегральный балл по периодам</h2>
+      <div id="trend"></div>
+    </div>
+    <div class="panel">
+      <h2>Баллы по блокам</h2>
+      <div class="bars" id="bars"></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div style="display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;margin-bottom:12px">
+      <h2 style="margin:0">Показатели</h2>
+      <select id="blockSel" aria-label="Блок"></select>
+      <select id="zoneSel" aria-label="Зона">
+        <option value="all">Все зоны</option><option value="YR">Только Ж и К</option><option value="R">Только К</option>
+      </select>
+      <input type="search" id="search" placeholder="Поиск показателя…" aria-label="Поиск показателя">
+      <span class="muted" style="font-size:12px"><span class="star">★</span> — участвует в скоринге</span>
+    </div>
+    <div class="tablebox"><table class="ind" id="ind"></table></div>
+  </section>
+
+  <section class="panel" id="conclusion">
+    <h2 id="cTitle">Финансовое заключение</h2>
+    <div class="ctools">
+      <button class="btn primary" id="genBtn" type="button">✨ Сформировать заключение</button>
+      <button class="btn" id="genAllBtn" type="button">✨ Для всех компаний периода</button>
+      <button class="btn" id="groupBtn" type="button" title="Сводное заключение по компаниям выборки: Word + расчёт в Excel">📊 Сводка по группе</button>
+      <button class="btn" id="wordBtn">⬇ Выгрузить в Word</button>
+      <button class="btn" id="docxLink" title="Полное заключение по Методике: итог, выводы, все показатели, DuPont, сигналы, рекомендации">📄 Полное заключение (.docx)</button>
+      <button class="btn" id="txtBtn">⬇ TXT</button>
+      <button class="btn" id="copyBtn">⧉ Копировать</button>
+      <button class="btn" id="printBtn">🖨 Печать / PDF</button>
+      <button class="btn" id="resetBtn" title="Вернуть исходный текст">↺ Сбросить правки</button>
+      <span class="src" id="cSrc"></span>
+    </div>
+    <div class="genstatus" id="genStatus" role="status" aria-live="polite"></div>
+    <div class="editor" id="editor" contenteditable="true" spellcheck="true" aria-label="Текст заключения"></div>
+    <div class="hint">Текст можно редактировать прямо здесь перед выгрузкой. Правки сохраняются только в этой вкладке браузера.
+      Заключения LLM сохраняются в этом браузере. В LLM уходят только посчитанные показатели, не строки CSV.</div>
+  </section>
+  </main>
+</div>
+
+<dialog class="up" id="upDlg" aria-labelledby="upTitle">
+  <div class="uphead"><h2 id="upTitle" style="margin:0">Загрузить данные</h2>
+    <button class="x" id="upClose" aria-label="Закрыть">×</button></div>
+  <div class="upbody">
+    <div class="upfmt">Выберите оба файла или перетащите их сюда. Файлы проверяются и хранятся <b>только в этом браузере</b>
+      (на сервер не отправляются); прежняя загрузка сохраняется — её можно вернуть.<br>
+      <span class="minm">Период — не меньше <span class="minN">15</span> месяцев подряд по каждому юрлицу, в ОПУ и в балансе,
+        без пропущенных месяцев</span> (квартал сравнивается с тем же кварталом прошлого года, долг / EBITDA — за 12 месяцев).</div>
+    <div class="drops">
+      <label class="drop" id="dropPl"><input type="file" accept=".csv,text/csv" data-f="pl">
+        <b>ОПУ — pl.csv</b><span class="fn">обороты за месяц · выбрать файл</span></label>
+      <label class="drop" id="dropBs"><input type="file" accept=".csv,text/csv" data-f="bs">
+        <b>Баланс — bs.csv</b><span class="fn">остатки на конец месяца · выбрать файл</span></label>
+    </div>
+    <div class="uperr" id="upErr" role="alert"></div>
+    <details class="upfmt"><summary>Формат файлов</summary>
+      <p>Первая строка — заголовок: <code>entity_code,company_name,year,month,code,value</code>.
+        Одна строка — юрлицо × месяц × статья. <code>company_name</code> можно не заполнять.
+        <code>code</code> — код статьи из <code>config\measures.toml</code>, остальные статьи пропускаются.
+        <code>value</code> — сумма в USD, расходы ОПУ со знаком «−».
+        По каждому юрлицу — не меньше <span class="minN">15</span> месяцев подряд без пропусков.
+        Разделитель <code>,</code> (числа с точкой) или <code>;</code> (как сохраняет русский Excel, числа с запятой).
+        Кодировка UTF-8 или Windows-1251. Лишние колонки (например, <code>line_name</code> из шаблона) пропускаются.</p>
+    </details>
+    <fieldset class="tpl" id="tplBox">
+      <legend>Нет файлов? Скачайте шаблон</legend>
+      <div class="upfmt">В шаблоне — все нужные статьи с названиями (колонка <code>line_name</code>) на каждый месяц периода.
+        Откройте его в Excel, впишите суммы в колонку <code>value</code>, сохраните как CSV и загрузите выше.
+        Строки без суммы пропускаются. <span class="minm">Выберите период не меньше <span class="minN">15</span> месяцев.</span></div>
+      <div class="row">
+        <label>Код юрлица<input id="tplE" maxlength="20" placeholder="589"></label>
+        <label>Название компании<input id="tplName" maxlength="100" placeholder="необязательно"></label>
+        <label>Месяц с<input id="tplFrom" type="month" placeholder="ГГГГ-ММ"></label>
+        <label>Месяц по<input id="tplTo" type="month" placeholder="ГГГГ-ММ"></label>
+      </div>
+      <div class="tplspan" id="tplSpan" aria-live="polite"></div>
+      <div class="btns">
+        <button class="btn" id="tplPl" type="button">⬇ Шаблон ОПУ (pl.csv)</button>
+        <button class="btn" id="tplBs" type="button">⬇ Шаблон баланса (bs.csv)</button>
+      </div>
+    </fieldset>
+    <div class="updata">Примеры: <button class="linkbtn" type="button" data-sample="alisa">«Алиса»</button>
+      <button class="linkbtn" type="button" data-sample="mary">«ОАОМэри»</button>
+      <span class="spacer" style="flex:1"></span>
+      <button class="linkbtn" type="button" id="restoreBtn" style="display:none">↩ Вернуть прежние данные</button>
+      <button class="linkbtn" type="button" id="clearBtn" style="display:none">🗑 Удалить данные из браузера</button></div>
+    <div class="upact">
+      <button class="btn" id="upCancel">Отмена</button>
+      <button class="btn primary" id="upGo" disabled>Загрузить</button>
+    </div>
+  </div>
+</dialog>
+<div id="tip" role="tooltip"></div>
+<div class="toast" id="toast"></div>
+
+<script type="module" src="app/main.js"></script>
+</body>
+</html>

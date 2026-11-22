@@ -1,0 +1,13 @@
+# Секреты — никогда не загружать
+.env
+
+# Эталон на данных реальных юрлиц
+tests/golden/changed.json
+
+# Создаются сборкой (scripts/build.mjs)
+public/config/
+lib/generated.mjs
+
+# Служебное
+node_modules/
+.netlify/

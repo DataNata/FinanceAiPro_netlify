@@ -1,0 +1,1698 @@
+{
+ "indicators": {
+  "ebit": {
+   "name": "EBIT",
+   "block": "base",
+   "unit": "money",
+   "formula": "[Profit before tax] + [Interest expense_forEbitda]"
+  },
+  "ebitda": {
+   "name": "EBITDA",
+   "block": "base",
+   "unit": "money",
+   "formula": "EBIT + [Amortisation_forEbitda]"
+  },
+  "tax_rate": {
+   "name": "Эффективная ставка налога (T)",
+   "block": "base",
+   "unit": "pct",
+   "formula": "Налог на прибыль / прибыль до налогообложения",
+   "norm": [
+    "Справочно",
+    "—",
+    "Резкий рост (> 10 п. п. к прошлому году)"
+   ],
+   "on": "yoy_pp",
+   "zones": [
+    {
+     "zone": "R",
+     "gt": 0.1
+    },
+    {
+     "zone": "G"
+    }
+   ]
+  },
+  "golden_rule": {
+   "name": "«Золотое правило» роста",
+   "block": "growth",
+   "unit": "text",
+   "formula": "T_EBIT > T_выручки > T_активов > 100%",
+   "norm": [
+    "Выполняется",
+    "Нарушено одно звено",
+    "Активы растут быстрее выручки, EBIT падает"
+   ],
+   "custom": true
+  },
+  "t_assets": {
+   "name": "Темп изменения активов",
+   "block": "growth",
+   "unit": "index",
+   "formula": "Активы на конец / активы год назад"
+  },
+  "t_sales": {
+   "name": "Темп изменения выручки",
+   "block": "growth",
+   "unit": "index",
+   "formula": "Выручка / выручка за тот же период прошлого года"
+  },
+  "t_ebit": {
+   "name": "Темп изменения EBIT",
+   "block": "growth",
+   "unit": "index",
+   "formula": "EBIT / EBIT за тот же период прошлого года"
+  },
+  "net_assets": {
+   "name": "Чистые активы",
+   "block": "growth",
+   "unit": "money",
+   "formula": "Активы − все обязательства",
+   "norm": [
+    "Растут, больше уставного капитала",
+    "Снижаются",
+    "Меньше уставного или отрицательные"
+   ],
+   "custom": true,
+   "better": "higher"
+  },
+  "nca_share": {
+   "name": "Доля внеоборотных активов",
+   "block": "growth",
+   "unit": "pct",
+   "formula": "Внеоборотные активы / активы",
+   "norm": [
+    "≤ 30%",
+    "30–40%",
+    "> 40%"
+   ],
+   "zones": [
+    {
+     "zone": "G",
+     "le": 0.3
+    },
+    {
+     "zone": "Y",
+     "le": 0.4
+    },
+    {
+     "zone": "R"
+    }
+   ],
+   "better": "lower"
+  },
+  "inventory_share": {
+   "name": "Доля запасов в активах",
+   "block": "growth",
+   "unit": "pct",
+   "formula": "Запасы / активы",
+   "norm": [
+    "Не растёт 2 периода подряд",
+    "Рост 2 периода подряд",
+    "Рост 3+ периода при падении выручки"
+   ],
+   "custom": true,
+   "better": "lower"
+  },
+  "current_ratio": {
+   "name": "Текущая ликвидность (КТЛ)",
+   "block": "liquidity",
+   "unit": "ratio",
+   "formula": "Текущие активы / текущие обязательства",
+   "norm": [
+    "1,0–2,0",
+    "0,8–1,0 или > 2,0",
+    "< 0,8"
+   ],
+   "zones": [
+    {
+     "zone": "R",
+     "lt": 0.8
+    },
+    {
+     "zone": "Y",
+     "lt": 1.0
+    },
+    {
+     "zone": "G",
+     "le": 2.0
+    },
+    {
+     "zone": "Y"
+    }
+   ],
+   "better": "higher"
+  },
+  "quick_ratio": {
+   "name": "Быстрая ликвидность",
+   "block": "liquidity",
+   "unit": "ratio",
+   "formula": "(Текущие активы − запасы) / текущие обязательства",
+   "norm": [
+    "≥ 0,6",
+    "0,4–0,6",
+    "< 0,4"
+   ],
+   "zones": [
+    {
+     "zone": "R",
+     "lt": 0.4
+    },
+    {
+     "zone": "Y",
+     "lt": 0.6
+    },
+    {
+     "zone": "G"
+    }
+   ],
+   "better": "higher"
+  },
+  "cash_ratio": {
+   "name": "Абсолютная ликвидность",
+   "block": "liquidity",
+   "unit": "ratio",
+   "formula": "Денежные средства / текущие обязательства",
+   "norm": [
+    "0,05–0,2",
+    "< 0,05 или > 0,2 (неработающие деньги)",
+    "< 0,02"
+   ],
+   "zones": [
+    {
+     "zone": "R",
+     "lt": 0.02
+    },
+    {
+     "zone": "Y",
+     "lt": 0.05
+    },
+    {
+     "zone": "G",
+     "le": 0.2
+    },
+    {
+     "zone": "Y"
+    }
+   ]
+  },
+  "balance_liquidity": {
+   "name": "Ликвидность баланса",
+   "block": "liquidity",
+   "unit": "ratio",
+   "formula": "(ДС + 0,5 × ДЗ + 0,3 × запасы) / (КО − кратк. кредиты + 0,5 × кратк. кредиты + 0,3 × ДО)",
+   "norm": [
+    "≥ 0,7",
+    "0,5–0,7",
+    "< 0,5"
+   ],
+   "zones": [
+    {
+     "zone": "R",
+     "lt": 0.5
+    },
+    {
+     "zone": "Y",
+     "lt": 0.7
+    },
+    {
+     "zone": "G"
+    }
+   ],
+   "better": "higher"
+  },
+  "nwc": {
+   "name": "Чистый рабочий капитал",
+   "block": "liquidity",
+   "unit": "money",
+   "formula": "Текущие активы − текущие обязательства",
+   "norm": [
+    "Стабилен при росте продаж",
+    "Растёт быстрее выручки",
+    "Отрицательный при росте банковских кредитов"
+   ],
+   "custom": true
+  },
+  "non_cash_wc": {
+   "name": "Неденежный рабочий капитал",
+   "block": "liquidity",
+   "unit": "money",
+   "formula": "Текущие активы − ДС − текущие обязательства",
+   "norm": [
+    "Отрицательный или около нуля",
+    "Положительный, растёт",
+    "Растёт быстрее выручки"
+   ],
+   "custom": true
+  },
+  "autonomy": {
+   "name": "Коэффициент автономии",
+   "block": "stability",
+   "unit": "ratio",
+   "formula": "Собственный капитал / активы",
+   "norm": [
+    "≥ 0,30",
+    "0,20–0,30",
+    "< 0,20"
+   ],
+   "zones": [
+    {
+     "zone": "R",
+     "lt": 0.2
+    },
+    {
+     "zone": "Y",
+     "lt": 0.3
+    },
+    {
+     "zone": "G"
+    }
+   ],
+   "better": "higher"
+  },
+  "fin_dependence": {
+   "name": "Финансовая зависимость (КФЗ)",
+   "block": "stability",
+   "unit": "ratio",
+   "formula": "Все обязательства / активы",
+   "norm": [
+    "≤ 0,70",
+    "0,70–0,80",
+    "> 0,80"
+   ],
+   "zones": [
+    {
+     "zone": "G",
+     "le": 0.7
+    },
+    {
+     "zone": "Y",
+     "le": 0.8
+    },
+    {
+     "zone": "R"
+    }
+   ],
+   "better": "lower"
+  },
+  "leverage": {
+   "name": "Финансовый рычаг (D/E)",
+   "block": "stability",
+   "unit": "ratio",
+   "formula": "Все обязательства / собственный капитал",
+   "norm": [
+    "≤ 2,5",
+    "2,5–4,0",
+    "> 4,0"
+   ],
+   "zones": [
+    {
+     "zone": "G",
+     "le": 2.5
+    },
+    {
+     "zone": "Y",
+     "le": 4.0
+    },
+    {
+     "zone": "R"
+    }
+   ],
+   "better": "lower"
+  },
+  "bank_debt_share": {
+   "name": "Доля банковского долга",
+   "block": "stability",
+   "unit": "ratio",
+   "formula": "Банковские кредиты / (собственный капитал + банковские кредиты)",
+   "norm": [
+    "≤ 0,40",
+    "0,40–0,60",
+    "> 0,60"
+   ],
+   "zones": [
+    {
+     "zone": "G",
+     "le": 0.4
+    },
+    {
+     "zone": "Y",
+     "le": 0.6
+    },
+    {
+     "zone": "R"
+    }
+   ]
+  },
+  "icr": {
+   "name": "Покрытие банковских процентов",
+   "block": "stability",
+   "unit": "ratio",
+   "formula": "EBIT / [Interest expense_forEbitda]",
+   "norm": [
+    "> 4",
+    "2–4",
+    "< 2 (< 1 — дефолт)"
+   ],
+   "zones": [
+    {
+     "zone": "G",
+     "gt": 4
+    },
+    {
+     "zone": "Y",
+     "ge": 2
+    },
+    {
+     "zone": "R"
+    }
+   ],
+   "better": "higher"
+  },
+  "bank_debt_ebitda": {
+   "name": "Банковский долг / EBITDA (LTM)",
+   "block": "stability",
+   "unit": "ratio",
+   "formula": "Банковские кредиты / EBITDA за 12 месяцев",
+   "norm": [
+    "≤ 2,5",
+    "2,5–3,5",
+    "> 3,5"
+   ],
+   "zones": [
+    {
+     "zone": "G",
+     "le": 2.5
+    },
+    {
+     "zone": "Y",
+     "le": 3.5
+    },
+    {
+     "zone": "R"
+    }
+   ],
+   "better": "lower"
+  },
+  "net_bank_debt_ebitda": {
+   "name": "Чистый банковский долг / EBITDA (LTM)",
+   "block": "stability",
+   "unit": "ratio",
+   "formula": "(Банковские кредиты − ДС) / EBITDA за 12 месяцев",
+   "norm": [
+    "≤ 2,0",
+    "2,0–3,0",
+    "> 3,0"
+   ],
+   "zones": [
+    {
+     "zone": "G",
+     "le": 2.0
+    },
+    {
+     "zone": "Y",
+     "le": 3.0
+    },
+    {
+     "zone": "R"
+    }
+   ]
+  },
+  "fin_stab_current": {
+   "name": "Текущая финансовая устойчивость",
+   "block": "stability",
+   "unit": "text",
+   "formula": "Абс.: ДС ≥ КЗ; норм.: ДС + ДЗ ≥ КЗ; мин.: ДС + ДЗ + запасы ≥ КЗ; иначе кризисная",
+   "norm": [
+    "Абсолютная / нормальная",
+    "Минимальная",
+    "Кризисная"
+   ],
+   "custom": true
+  },
+  "fin_stab_short": {
+   "name": "Краткосрочная финансовая устойчивость",
+   "block": "stability",
+   "unit": "text",
+   "formula": "Та же проверка для КЗ + краткосрочные кредиты",
+   "norm": [
+    "Абсолютная / нормальная",
+    "Минимальная",
+    "Кризисная"
+   ],
+   "custom": true
+  },
+  "fin_stab_long": {
+   "name": "Долгосрочная финансовая устойчивость",
+   "block": "stability",
+   "unit": "text",
+   "formula": "Та же проверка для КЗ + все кредиты",
+   "norm": [
+    "Нормальная / минимальная",
+    "—",
+    "Кризисная"
+   ],
+   "custom": true
+  },
+  "dio": {
+   "name": "Период оборота запасов (DIO)",
+   "block": "activity",
+   "unit": "days",
+   "formula": "Средние запасы / себестоимость × дни периода",
+   "norm": [
+    "≤ 45 дн.",
+    "45–60 дн.",
+    "> 60 дн."
+   ],
+   "zones": [
+    {
+     "zone": "G",
+     "le": 45
+    },
+    {
+     "zone": "Y",
+     "le": 60
+    },
+    {
+     "zone": "R"
+    }
+   ],
+   "better": "lower"
+  },
+  "dso": {
+   "name": "Период оборота дебиторской задолженности (DSO)",
+   "block": "activity",
+   "unit": "days",
+   "formula": "Средняя ДЗ / выручка × дни периода",
+   "norm": [
+    "≤ 20 дн.",
+    "20–35 дн.",
+    "> 35 дн."
+   ],
+   "zones": [
+    {
+     "zone": "G",
+     "le": 20
+    },
+    {
+     "zone": "Y",
+     "le": 35
+    },
+    {
+     "zone": "R"
+    }
+   ],
+   "better": "lower"
+  },
+  "dpo": {
+   "name": "Период оборота кредиторской задолженности (DPO)",
+   "block": "activity",
+   "unit": "days",
+   "formula": "Средняя КЗ / себестоимость × дни периода",
+   "norm": [
+    "≥ DIO + DSO",
+    "Покрывает 50–100% цикла",
+    "< 50% цикла"
+   ],
+   "on": "dpo_cover",
+   "zones": [
+    {
+     "zone": "G",
+     "ge": 1.0
+    },
+    {
+     "zone": "Y",
+     "ge": 0.5
+    },
+    {
+     "zone": "R"
+    }
+   ],
+   "better": "higher"
+  },
+  "ccc": {
+   "name": "Денежный цикл (CCC)",
+   "block": "activity",
+   "unit": "days",
+   "formula": "DSO + DIO − DPO",
+   "norm": [
+    "≤ 0 дн.",
+    "0–30 дн.",
+    "> 30 дн."
+   ],
+   "zones": [
+    {
+     "zone": "G",
+     "le": 0
+    },
+    {
+     "zone": "Y",
+     "le": 30
+    },
+    {
+     "zone": "R"
+    }
+   ],
+   "better": "lower"
+  },
+  "asset_turnover": {
+   "name": "Оборачиваемость активов",
+   "block": "activity",
+   "unit": "ratio",
+   "formula": "Выручка (годовая) / средние активы",
+   "norm": [
+    "≥ 2,5",
+    "1,8–2,5",
+    "< 1,8"
+   ],
+   "zones": [
+    {
+     "zone": "G",
+     "ge": 2.5
+    },
+    {
+     "zone": "Y",
+     "ge": 1.8
+    },
+    {
+     "zone": "R"
+    }
+   ],
+   "better": "higher"
+  },
+  "ca_turnover": {
+   "name": "Оборачиваемость оборотных активов",
+   "block": "activity",
+   "unit": "ratio",
+   "formula": "Выручка (годовая) / средние текущие активы",
+   "norm": [
+    "Растёт (> +2%)",
+    "Стабильна (±2%)",
+    "Падает"
+   ],
+   "on": "yoy_change",
+   "zones": [
+    {
+     "zone": "G",
+     "gt": 0.02
+    },
+    {
+     "zone": "Y",
+     "ge": -0.02
+    },
+    {
+     "zone": "R"
+    }
+   ]
+  },
+  "nca_turnover": {
+   "name": "Оборачиваемость внеоборотных активов",
+   "block": "activity",
+   "unit": "ratio",
+   "formula": "Выручка (годовая) / средние внеоборотные активы",
+   "norm": [
+    "Растёт (> +2%)",
+    "Стабильна (±2%)",
+    "Падает"
+   ],
+   "on": "yoy_change",
+   "zones": [
+    {
+     "zone": "G",
+     "gt": 0.02
+    },
+    {
+     "zone": "Y",
+     "ge": -0.02
+    },
+    {
+     "zone": "R"
+    }
+   ]
+  },
+  "equity_turnover": {
+   "name": "Оборачиваемость собственного капитала",
+   "block": "activity",
+   "unit": "ratio",
+   "formula": "Выручка (годовая) / средний собственный капитал",
+   "norm": [
+    "Растёт (> +2%)",
+    "Стабильна (±2%)",
+    "Падает"
+   ],
+   "on": "yoy_change",
+   "zones": [
+    {
+     "zone": "G",
+     "gt": 0.02
+    },
+    {
+     "zone": "Y",
+     "ge": -0.02
+    },
+    {
+     "zone": "R"
+    }
+   ]
+  },
+  "sales_nwc": {
+   "name": "Выручка / чистый рабочий капитал",
+   "block": "activity",
+   "unit": "ratio",
+   "formula": "Выручка (годовая) / ЧРК",
+   "norm": [
+    "Растёт",
+    "Снижается (до −20%)",
+    "Резко снижается (> −20%)"
+   ],
+   "on": "yoy_change",
+   "zones": [
+    {
+     "zone": "G",
+     "ge": 0
+    },
+    {
+     "zone": "Y",
+     "ge": -0.2
+    },
+    {
+     "zone": "R"
+    }
+   ]
+  },
+  "overtrading": {
+   "name": "Тест на овертрейдинг",
+   "block": "activity",
+   "unit": "text",
+   "formula": "Рост выручки > 20% + рост ТО и запасов + (запасы + ДЗ) > выручки за 3 мес. + падение КТЛ",
+   "norm": [
+    "Признаков нет",
+    "1–2 признака",
+    "3 и более"
+   ],
+   "custom": true
+  },
+  "gross_margin": {
+   "name": "Валовая маржа",
+   "block": "profitability",
+   "unit": "pct",
+   "formula": "Валовая прибыль / выручка",
+   "norm": [
+    "Не ниже прошлого года (бюджета)",
+    "Снижение на 1–2 п. п.",
+    "Снижение > 2 п. п."
+   ],
+   "on": "yoy_pp",
+   "zones": [
+    {
+     "zone": "G",
+     "gt": -0.01
+    },
+    {
+     "zone": "Y",
+     "ge": -0.02
+    },
+    {
+     "zone": "R"
+    }
+   ],
+   "better": "higher"
+  },
+  "ebitda_margin": {
+   "name": "Рентабельность по EBITDA",
+   "block": "profitability",
+   "unit": "pct",
+   "formula": "EBITDA / выручка",
+   "norm": [
+    "≥ 5%",
+    "3–5%",
+    "< 3%"
+   ],
+   "zones": [
+    {
+     "zone": "G",
+     "ge": 0.05
+    },
+    {
+     "zone": "Y",
+     "ge": 0.03
+    },
+    {
+     "zone": "R"
+    }
+   ],
+   "better": "higher"
+  },
+  "ebit_margin": {
+   "name": "Рентабельность по EBIT (OM)",
+   "block": "profitability",
+   "unit": "pct",
+   "formula": "EBIT / выручка",
+   "norm": [
+    "≥ 4%",
+    "2–4%",
+    "< 2%"
+   ],
+   "zones": [
+    {
+     "zone": "G",
+     "ge": 0.04
+    },
+    {
+     "zone": "Y",
+     "ge": 0.02
+    },
+    {
+     "zone": "R"
+    }
+   ],
+   "better": "higher"
+  },
+  "net_margin": {
+   "name": "Чистая рентабельность",
+   "block": "profitability",
+   "unit": "pct",
+   "formula": "Чистая прибыль / выручка",
+   "norm": [
+    "≥ 2,5%",
+    "1–2,5%",
+    "< 1%"
+   ],
+   "zones": [
+    {
+     "zone": "G",
+     "ge": 0.025
+    },
+    {
+     "zone": "Y",
+     "ge": 0.01
+    },
+    {
+     "zone": "R"
+    }
+   ],
+   "better": "higher"
+  },
+  "roa_star": {
+   "name": "Экономическая рентабельность активов (ROA*)",
+   "block": "profitability",
+   "unit": "pct",
+   "formula": "EBIT (годовой) / средние активы",
+   "norm": [
+    "≥ 10%",
+    "6–10%",
+    "< 6%"
+   ],
+   "zones": [
+    {
+     "zone": "G",
+     "ge": 0.1
+    },
+    {
+     "zone": "Y",
+     "ge": 0.06
+    },
+    {
+     "zone": "R"
+    }
+   ],
+   "better": "higher"
+  },
+  "roa_investors": {
+   "name": "ROA для инвесторов",
+   "block": "profitability",
+   "unit": "pct",
+   "formula": "(Чистая прибыль + банк. проценты × (1 − T)) (годовые) / средние активы",
+   "norm": [
+    "Растёт (> +0,5 п. п.)",
+    "Стабильна",
+    "Падает (< −0,5 п. п.)"
+   ],
+   "on": "yoy_pp",
+   "zones": [
+    {
+     "zone": "G",
+     "gt": 0.005
+    },
+    {
+     "zone": "Y",
+     "ge": -0.005
+    },
+    {
+     "zone": "R"
+    }
+   ]
+  },
+  "roce": {
+   "name": "Рентабельность используемого капитала (ROCE)",
+   "block": "profitability",
+   "unit": "pct",
+   "formula": "EBIT (годовой) / средний (собственный капитал + долгосрочные обязательства)",
+   "norm": [
+    "≥ 20%",
+    "WACC–20%",
+    "< WACC"
+   ],
+   "custom": true,
+   "better": "higher"
+  },
+  "roe": {
+   "name": "Рентабельность собственного капитала (ROE)",
+   "block": "profitability",
+   "unit": "pct",
+   "formula": "Чистая прибыль (годовая) / средний собственный капитал",
+   "norm": [
+    "≥ 25%",
+    "15–25%",
+    "< 15% или < ставки по кредитам"
+   ],
+   "custom": true,
+   "better": "higher"
+  },
+  "r_d": {
+   "name": "Ставка банковского финансирования (r_D)",
+   "block": "capital",
+   "unit": "pct",
+   "formula": "Банковские проценты (годовые) / средние банковские кредиты",
+   "norm": [
+    "Ниже рыночной",
+    "На уровне рынка (±1 п. п.)",
+    "Выше рынка"
+   ],
+   "custom": true
+  },
+  "r_e": {
+   "name": "Стоимость собственного капитала (r_E = ROE)",
+   "block": "capital",
+   "unit": "pct",
+   "formula": "Принимается равной ROE"
+  },
+  "wacc": {
+   "name": "WACC",
+   "block": "capital",
+   "unit": "pct",
+   "formula": "r_E × E / (E + D) + r_D × D / (E + D) × (1 − T); D — банковские кредиты"
+  },
+  "spread_roce_wacc": {
+   "name": "Спред ROCE − WACC",
+   "block": "capital",
+   "unit": "pp",
+   "formula": "ROCE − WACC",
+   "norm": [
+    "> 5 п. п.",
+    "0–5 п. п.",
+    "< 0"
+   ],
+   "zones": [
+    {
+     "zone": "G",
+     "gt": 0.05
+    },
+    {
+     "zone": "Y",
+     "ge": 0
+    },
+    {
+     "zone": "R"
+    }
+   ],
+   "better": "higher"
+  },
+  "i_rate": {
+   "name": "Ставка по всем обязательствам (i)",
+   "block": "capital",
+   "unit": "pct",
+   "formula": "Банковские проценты (годовые) / средние обязательства"
+  },
+  "differential": {
+   "name": "Дифференциал финансового рычага (ROA* − i)",
+   "block": "capital",
+   "unit": "pp",
+   "formula": "ROA* − i",
+   "norm": [
+    "≥ 5 п. п.",
+    "0–5 п. п.",
+    "< 0"
+   ],
+   "zones": [
+    {
+     "zone": "G",
+     "ge": 0.05
+    },
+    {
+     "zone": "Y",
+     "ge": 0
+    },
+    {
+     "zone": "R"
+    }
+   ],
+   "better": "higher"
+  },
+  "dol": {
+   "name": "Сила операционного рычага (DOL)",
+   "block": "levers",
+   "unit": "ratio",
+   "formula": "% изменения EBIT / % изменения выручки (к прошлому году)",
+   "norm": [
+    "≤ 3",
+    "3–5",
+    "> 5 или отрицательный"
+   ],
+   "zones": [
+    {
+     "zone": "R",
+     "lt": 0
+    },
+    {
+     "zone": "G",
+     "le": 3
+    },
+    {
+     "zone": "Y",
+     "le": 5
+    },
+    {
+     "zone": "R"
+    }
+   ]
+  },
+  "margin_safety": {
+   "name": "Маржа безопасности",
+   "block": "levers",
+   "unit": "pct",
+   "formula": "1 / DOL",
+   "norm": [
+    "≥ 33%",
+    "20–33%",
+    "< 20%"
+   ],
+   "zones": [
+    {
+     "zone": "G",
+     "ge": 0.33
+    },
+    {
+     "zone": "Y",
+     "ge": 0.2
+    },
+    {
+     "zone": "R"
+    }
+   ]
+  },
+  "bep": {
+   "name": "Точка безубыточности (экспресс)",
+   "block": "levers",
+   "unit": "money",
+   "formula": "Выручка × (1 − 1 / DOL)",
+   "norm": [
+    "Ниже выручки слабых месяцев",
+    "Близка к ней (±10%)",
+    "Выше неё"
+   ],
+   "custom": true
+  },
+  "dfl": {
+   "name": "Сила финансового рычага (DFL)",
+   "block": "levers",
+   "unit": "ratio",
+   "formula": "EBIT / прибыль до налогообложения",
+   "norm": [
+    "≤ 1,5",
+    "1,5–3",
+    "> 3 или < 0"
+   ],
+   "zones": [
+    {
+     "zone": "R",
+     "lt": 0
+    },
+    {
+     "zone": "G",
+     "le": 1.5
+    },
+    {
+     "zone": "Y",
+     "le": 3
+    },
+    {
+     "zone": "R"
+    }
+   ],
+   "better": "lower"
+  },
+  "dtl": {
+   "name": "Сопряжённый рычаг (DTL)",
+   "block": "levers",
+   "unit": "ratio",
+   "formula": "DOL × DFL",
+   "norm": [
+    "≤ 4",
+    "4–8",
+    "> 8"
+   ],
+   "zones": [
+    {
+     "zone": "R",
+     "lt": 0
+    },
+    {
+     "zone": "G",
+     "le": 4
+    },
+    {
+     "zone": "Y",
+     "le": 8
+    },
+    {
+     "zone": "R"
+    }
+   ]
+  },
+  "tb": {
+   "name": "Налоговое бремя (TB)",
+   "block": "factor",
+   "unit": "ratio",
+   "formula": "Чистая прибыль / прибыль до налогообложения"
+  },
+  "ib": {
+   "name": "Банковское процентное бремя (IB)",
+   "block": "factor",
+   "unit": "ratio",
+   "formula": "Прибыль до налогообложения / EBIT"
+  },
+  "lr": {
+   "name": "Коэффициент капитализации (LR)",
+   "block": "factor",
+   "unit": "ratio",
+   "formula": "Средние активы / средний собственный капитал"
+  },
+  "roe_leverage": {
+   "name": "ROE через финансовый рычаг",
+   "block": "factor",
+   "unit": "pct",
+   "formula": "(1 − T) × ROA* + (1 − T) × (ROA* − i) × D / E"
+  },
+  "ce_turnover": {
+   "name": "Оборачиваемость используемого капитала (S / CE)",
+   "block": "factor",
+   "unit": "ratio",
+   "formula": "Выручка (годовая) / средний (E + LTL)"
+  },
+  "z5": {
+   "name": "Z-модель Альтмана, 5 факторов",
+   "block": "bankruptcy",
+   "unit": "ratio",
+   "formula": "0,717·X1 + 0,847·X2 + 3,107·X3 + 0,42·X4 + 0,995·X5 (ОПУ — LTM)",
+   "norm": [
+    "> 2,9",
+    "1,23–2,9",
+    "< 1,23"
+   ],
+   "zones": [
+    {
+     "zone": "G",
+     "gt": 2.9
+    },
+    {
+     "zone": "Y",
+     "ge": 1.23
+    },
+    {
+     "zone": "R"
+    }
+   ],
+   "better": "higher"
+  },
+  "z2": {
+   "name": "Z-модель, 2 фактора",
+   "block": "bankruptcy",
+   "unit": "ratio",
+   "formula": "−0,3877 − 1,0736 × КТЛ + 0,579 × КФЗ",
+   "norm": [
+    "< −1,0",
+    "от −1,0 до 0",
+    "> 0"
+   ],
+   "zones": [
+    {
+     "zone": "G",
+     "lt": -1.0
+    },
+    {
+     "zone": "Y",
+     "le": 0
+    },
+    {
+     "zone": "R"
+    }
+   ],
+   "better": "lower"
+  }
+ },
+ "llm": {
+  "default_provider": "anthropic",
+  "providers": {
+   "anthropic": {
+    "type": "anthropic",
+    "api_key_env": "ANTHROPIC_API_KEY",
+    "model_env": "ANTHROPIC_MODEL",
+    "model": "claude-opus-5-5",
+    "max_tokens": 16000,
+    "effort": "medium",
+    "fallbacks": "default"
+   },
+   "openai": {
+    "type": "openai_compatible",
+    "base_url": "https://api.openai.com/v1",
+    "api_key_env": "OPENAI_API_KEY",
+    "model_env": "OPENAI_MODEL",
+    "model": ""
+   },
+   "xai": {
+    "type": "openai_compatible",
+    "base_url": "https://api.x.ai/v1",
+    "api_key_env": "XAI_API_KEY",
+    "model_env": "XAI_MODEL",
+    "model": ""
+   },
+   "groq": {
+    "type": "openai_compatible",
+    "base_url": "https://api.groq.com/openai/v1",
+    "api_key_env": "GROQ_API_KEY",
+    "model_env": "GROQ_MODEL",
+    "model": ""
+   },
+   "gemini": {
+    "type": "openai_compatible",
+    "base_url": "https://generativelanguage.googleapis.com/v1beta/openai/",
+    "api_key_env": "GEMINI_API_KEY",
+    "model_env": "GEMINI_MODEL",
+    "model": ""
+   },
+   "deepseek": {
+    "type": "openai_compatible",
+    "base_url": "https://api.deepseek.com/v1",
+    "api_key_env": "DEEPSEEK_API_KEY",
+    "model_env": "DEEPSEEK_MODEL",
+    "model": ""
+   },
+   "ollama": {
+    "type": "openai_compatible",
+    "base_url": "http://localhost:11434/v1",
+    "api_key_env": "",
+    "model_env": "OLLAMA_MODEL",
+    "model": ""
+   },
+   "none": {
+    "type": "template"
+   }
+  }
+ },
+ "measures": {
+  "pl": {
+   "revenue": {
+    "name": "Выручка",
+    "ref": "[Revenue]",
+    "codes": [
+     "1000000000"
+    ],
+    "sign": 1,
+    "missing": "nan"
+   },
+   "cost_of_sales": {
+    "name": "Себестоимость продаж",
+    "hint": "расход — со знаком «−»",
+    "ref": "[Cost of sales]",
+    "codes": [
+     "2000000000"
+    ],
+    "sign": -1,
+    "missing": "nan"
+   },
+   "gross_profit": {
+    "name": "Валовая прибыль",
+    "hint": "убыток — со знаком «−»",
+    "ref": "[Gross profit]",
+    "codes": [
+     "8000000000"
+    ],
+    "sign": 1,
+    "missing": "nan"
+   },
+   "profit_before_tax": {
+    "name": "Прибыль до налогообложения",
+    "hint": "убыток — со знаком «−»",
+    "ref": "[Profit before tax]",
+    "codes": [
+     "9100000000"
+    ],
+    "sign": 1,
+    "missing": "nan"
+   },
+   "net_profit": {
+    "name": "Чистая прибыль",
+    "hint": "убыток — со знаком «−»",
+    "ref": "[Net profit]",
+    "codes": [
+     "7000000000"
+    ],
+    "sign": 1,
+    "missing": "nan"
+   },
+   "income_tax": {
+    "name": "Налог на прибыль",
+    "hint": "расход — со знаком «−»",
+    "ref": "[Income tax]",
+    "codes": [
+     "6000000000"
+    ],
+    "sign": -1,
+    "missing": "zero"
+   },
+   "interest_bank": {
+    "name": "Банковские проценты",
+    "hint": "расход — со знаком «−»",
+    "ref": "[Interest expense_forEbitda]",
+    "codes": [
+     "5001020100"
+    ],
+    "sign": -1,
+    "missing": "zero"
+   },
+   "amortisation": {
+    "name": "Амортизация",
+    "hint": "расход — со знаком «−»",
+    "ref": "[Amortisation_forEbitda]",
+    "codes": [
+     "4001070000"
+    ],
+    "sign": -1,
+    "missing": "nan"
+   },
+   "inventory_stat": {
+    "name": "Запасы (статистическая строка ОПУ, для контроля)",
+    "ref": "inventory",
+    "codes": [
+     "9400000000"
+    ],
+    "sign": 1,
+    "missing": "nan"
+   }
+  },
+  "bs": {
+   "total_assets": {
+    "name": "Активы",
+    "ref": "[Total assets]",
+    "codes": [
+     "1000000000"
+    ]
+   },
+   "total_liabilities_equity": {
+    "name": "Пассивы (обязательства и капитал)",
+    "ref": "LIABILITIES AND EQUITY",
+    "codes": [
+     "2000000000"
+    ]
+   },
+   "non_current_assets": {
+    "name": "Внеоборотные активы",
+    "ref": "[Non-current assets]",
+    "codes": [
+     "1100000000"
+    ]
+   },
+   "current_assets": {
+    "name": "Оборотные активы",
+    "ref": "[Current assets]",
+    "codes": [
+     "1200000000"
+    ]
+   },
+   "inventories": {
+    "name": "Запасы",
+    "ref": "[Inventories]",
+    "codes": [
+     "1201000000"
+    ]
+   },
+   "trade_receivables": {
+    "name": "Дебиторская задолженность (торговая)",
+    "ref": "[Trade receivables]",
+    "codes": [
+     "1202010000"
+    ]
+   },
+   "cash": {
+    "name": "Денежные средства",
+    "ref": "[Cash]",
+    "codes": [
+     "1206000000"
+    ]
+   },
+   "non_current_liabilities": {
+    "name": "Долгосрочные обязательства",
+    "ref": "[Non-current liabilities]",
+    "codes": [
+     "2100000000"
+    ]
+   },
+   "current_liabilities": {
+    "name": "Краткосрочные обязательства",
+    "ref": "[Current liabilities]",
+    "codes": [
+     "2200000000"
+    ]
+   },
+   "equity": {
+    "name": "Собственный капитал",
+    "ref": "[Equity]",
+    "codes": [
+     "2300000000"
+    ]
+   },
+   "share_capital": {
+    "name": "Уставный капитал",
+    "ref": "Share capital",
+    "codes": [
+     "2301010000"
+    ]
+   },
+   "trade_payables": {
+    "name": "Кредиторская задолженность (торговая, включая внутригрупповую)",
+    "ref": "[Trade payables]",
+    "codes": [
+     "2201010000",
+     "2207010000"
+    ],
+    "labels": [
+     "Торговая КЗ перед третьими лицами",
+     "Торговая КЗ внутригрупповая (ICO)"
+    ]
+   },
+   "bank_loans_lt": {
+    "name": "Долгосрочные банковские кредиты",
+    "ref": "[Bank loans LT]",
+    "codes": [
+     "2101010000"
+    ]
+   },
+   "bank_loans_st": {
+    "name": "Краткосрочные банковские кредиты и овердрафты",
+    "ref": "[Bank loans ST]",
+    "codes": [
+     "2204010000",
+     "2204020000",
+     "2204030000"
+    ],
+    "labels": [
+     "Овердрафты",
+     "Текущая часть долгосрочных кредитов",
+     "Краткосрочные банковские кредиты"
+    ]
+   }
+  }
+ },
+ "scoring": {
+  "points": {
+   "G": 2,
+   "Y": 1,
+   "R": 0
+  },
+  "blocks": {
+   "growth": {
+    "name": "Имущественное положение и рост",
+    "weight": 0.05,
+    "indicators": [
+     "golden_rule",
+     "net_assets"
+    ],
+    "report": [
+     "golden_rule",
+     "t_sales",
+     "t_ebit",
+     "t_assets",
+     "net_assets",
+     "nca_share",
+     "inventory_share"
+    ]
+   },
+   "liquidity": {
+    "name": "Ликвидность",
+    "weight": 0.15,
+    "indicators": [
+     "current_ratio",
+     "quick_ratio",
+     "balance_liquidity"
+    ],
+    "report": [
+     "current_ratio",
+     "quick_ratio",
+     "cash_ratio",
+     "balance_liquidity",
+     "nwc",
+     "non_cash_wc"
+    ]
+   },
+   "stability": {
+    "name": "Финансовая устойчивость",
+    "weight": 0.15,
+    "indicators": [
+     "autonomy",
+     "leverage",
+     "icr",
+     "bank_debt_ebitda",
+     "fin_stab_current"
+    ],
+    "report": [
+     "autonomy",
+     "fin_dependence",
+     "leverage",
+     "bank_debt_share",
+     "icr",
+     "bank_debt_ebitda",
+     "net_bank_debt_ebitda",
+     "fin_stab_current",
+     "fin_stab_short",
+     "fin_stab_long"
+    ]
+   },
+   "activity": {
+    "name": "Деловая активность",
+    "weight": 0.2,
+    "indicators": [
+     "dio",
+     "dso",
+     "ccc",
+     "asset_turnover"
+    ],
+    "report": [
+     "dio",
+     "dso",
+     "dpo",
+     "ccc",
+     "asset_turnover",
+     "ca_turnover",
+     "nca_turnover",
+     "equity_turnover",
+     "sales_nwc",
+     "overtrading"
+    ]
+   },
+   "profitability": {
+    "name": "Рентабельность",
+    "weight": 0.25,
+    "indicators": [
+     "ebit_margin",
+     "roa_star",
+     "roce",
+     "roe"
+    ],
+    "report": [
+     "gross_margin",
+     "ebitda_margin",
+     "ebit_margin",
+     "net_margin",
+     "roa_star",
+     "roa_investors",
+     "roce",
+     "roe",
+     "tax_rate"
+    ]
+   },
+   "capital": {
+    "name": "Рычаги и стоимость капитала",
+    "weight": 0.1,
+    "indicators": [
+     "dol",
+     "dtl",
+     "differential",
+     "spread_roce_wacc"
+    ],
+    "report": [
+     "r_d",
+     "r_e",
+     "wacc",
+     "spread_roce_wacc",
+     "i_rate",
+     "differential",
+     "dol",
+     "margin_safety",
+     "bep",
+     "dfl",
+     "dtl"
+    ]
+   },
+   "bankruptcy": {
+    "name": "Вероятность банкротства",
+    "weight": 0.1,
+    "indicators": [
+     "z5",
+     "z2"
+    ],
+    "report": [
+     "z5",
+     "z2"
+    ]
+   }
+  },
+  "order": {
+   "blocks": [
+    "profitability",
+    "activity",
+    "liquidity",
+    "stability",
+    "capital",
+    "bankruptcy",
+    "growth"
+   ]
+  },
+  "classes": [
+   {
+    "code": "A",
+    "min": 80,
+    "name": "Устойчивое",
+    "reaction": "Плановый режим"
+   },
+   {
+    "code": "B",
+    "min": 60,
+    "name": "Удовлетворительное",
+    "reaction": "Работа над показателями жёлтой зоны в рамках бюджета"
+   },
+   {
+    "code": "C",
+    "min": 40,
+    "name": "Неустойчивое",
+    "reaction": "План корректирующих мероприятий за 30 дней, ежемесячный мониторинг"
+   },
+   {
+    "code": "D",
+    "min": 0,
+    "name": "Кризисное",
+    "reaction": "Антикризисный план, мораторий на новые кредиты и капитальные затраты"
+   }
+  ],
+  "stop": {
+   "max_class": "C"
+  }
+ },
+ "settings": {
+  "entities": {
+   "codes": [
+    "589",
+    "780",
+    "781",
+    "785",
+    "787",
+    "790",
+    "797"
+   ],
+   "countries": {
+    "589": "Грузия",
+    "780": "Азербайджан",
+    "781": "Украина",
+    "785": "Армения",
+    "787": "Казахстан",
+    "790": "Узбекистан",
+    "797": "Молдова",
+    "902": "Грузия"
+   }
+  },
+  "params": {
+   "min_months": 15,
+   "inventory_check_tolerance": 0.02,
+   "balance_check_tolerance": 1.0,
+   "overtrading_revenue_growth": 0.2,
+   "overtrading_revenue_months": 3,
+   "non_cash_wc_near_zero": 0.02,
+   "worsening_periods": 3,
+   "bep_tolerance": 0.1,
+   "dol_min_sales_change": 0.005
+  },
+  "market_rates": {}
+ },
+ "signals": {
+  "dio_up": {
+   "signal": "DIO растёт два периода подряд, доля запасов в активах растёт",
+   "cause": "Избыточные закупки, слабый спрос, ожидание новой модели",
+   "action": "Ограничить закупки, распродать остатки до выхода нового релиза",
+   "owner": "Закупки, коммерческий директор"
+  },
+  "dso_up": {
+   "signal": "DSO растёт при стабильной выручке",
+   "cause": "Отсрочки клиентам, слабый сбор долгов",
+   "action": "Ревизия кредитных лимитов, претензионная работа",
+   "owner": "Коммерческий директор"
+  },
+  "dpo_down": {
+   "signal": "DPO сокращается",
+   "cause": "Ужесточение условий вендора",
+   "action": "Переговоры об условиях, диверсификация поставщиков",
+   "owner": "Финансовый директор"
+  },
+  "ccc_high": {
+   "signal": "Денежный цикл > 30 дней",
+   "cause": "Совокупность роста DIO, DSO и сокращения DPO",
+   "action": "План по оборотному капиталу с целевыми днями",
+   "owner": "Финансовый директор"
+  },
+  "overtrading": {
+   "signal": "Выручка растёт, текущая ликвидность падает, растут ТО и запасы",
+   "cause": "Овертрейдинг",
+   "action": "Притормозить рост продаж в кредит, долгосрочное финансирование под рост",
+   "owner": "Генеральный директор"
+  },
+  "gm_down": {
+   "signal": "Валовая маржа падает",
+   "cause": "Ценовая конкуренция, скидки, курсовые потери",
+   "action": "Анализ цен и промо, пересмотр условий с вендорами",
+   "owner": "Коммерческий директор"
+  },
+  "dol_high": {
+   "signal": "DOL > 5 или отрицательный",
+   "cause": "Расходы растут быстрее продаж",
+   "action": "Ревизия аренды, штата, маркетинга",
+   "owner": "Генеральный директор"
+  },
+  "debt_high": {
+   "signal": "Покрытие банковских процентов < 2 или долг / EBITDA > 3,5",
+   "cause": "Высокая долговая нагрузка",
+   "action": "Сокращение банковских кредитов, высвобождение оборотного капитала",
+   "owner": "Финансовый директор"
+  },
+  "differential_low": {
+   "signal": "Дифференциал ROA* − i < 5 п. п.",
+   "cause": "Рентабельность падает, кредиты дорожают",
+   "action": "Мораторий на новые кредиты, рефинансирование",
+   "owner": "Финансовый директор"
+  },
+  "z_yellow": {
+   "signal": "Z-модель в жёлтой зоне два периода подряд",
+   "cause": "Падение рентабельности и оборачиваемости",
+   "action": "Пересмотр ассортимента, каналов, структуры расходов",
+   "owner": "Собственники, генеральный директор"
+  }
+ }
+}
